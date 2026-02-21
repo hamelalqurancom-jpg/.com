@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التحكم | مسابقة حامل القرآن</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            background: #0a0a0a;
+            color: #fff;
+            font-family: 'Cairo', sans-serif;
+            padding: 40px 20px;
+        }
+
+        .admin-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+        }
+
+        .admin-header h1 {
+            color: #d4af37;
+            margin: 0;
+            font-size: 1.8rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .stat-card i {
+            font-size: 2rem;
+            color: #d4af37;
+            margin-bottom: 10px;
+        }
+
+        .stat-card h3 {
+            font-size: 1rem;
+            color: #aaa;
+            margin: 0;
+        }
+
+        .stat-card p {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 10px 0 0;
+        }
+
+        .registrations-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 15px;
+            overflow: hidden;
+        }
+
+        .registrations-table th,
+        .registrations-table td {
+            padding: 15px;
+            text-align: right;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .registrations-table th {
+            background: rgba(212, 175, 55, 0.1);
+            color: #d4af37;
+            font-weight: 700;
+        }
+
+        .registrations-table tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+            transition: 0.3s;
+        }
+
+        .btn-view {
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-img {
+            background: #d4af37;
+            color: #000;
+        }
+
+        .btn-delete {
+            background: #ff4d4d;
+            color: #fff;
+            margin-right: 5px;
+        }
+
+        .badge {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 700;
+        }
+
+        .badge-blue {
+            background: rgba(0, 123, 255, 0.2);
+            color: #007bff;
+            border: 1px solid #007bff;
+        }
+
+        .badge-pink {
+            background: rgba(255, 105, 180, 0.2);
+            color: #ff69b4;
+            border: 1px solid #ff69b4;
+        }
+
+        /* Modal Styles for Image Viewing */
+        .img-preview-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .img-preview-modal img {
+            max-width: 90%;
+            max-height: 90%;
+            border: 3px solid #d4af37;
+            border-radius: 10px;
+        }
+
+        .close-preview {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: #fff;
+            font-size: 2.5rem;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.1);
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: 0.3s;
+        }
+
+        .close-preview:hover {
+            background: #ff4d4d;
+            transform: rotate(90deg);
+        }
+
+        .download-btn {
+            position: absolute;
+            bottom: 30px;
+            background: #28a745;
+            color: #fff;
+            padding: 12px 25px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+        }
+
+        .login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #0a0a0a;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 40px;
+            border-radius: 20px;
+            border: 1px solid #d4af37;
+            text-align: center;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .login-card input {
+            width: 100%;
+            padding: 12px;
+            margin: 20px 0;
+            border-radius: 10px;
+            border: 1px solid #333;
+            background: #111;
+            color: #fff;
+            text-align: center;
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            background: #d4af37;
+            color: #000;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="loginOverlay" class="login-overlay">
+        <div class="login-card">
+            <i class="fas fa-lock" style="font-size: 3rem; color: #d4af37; margin-bottom: 20px;"></i>
+            <h2>دخول لوحة التحكم</h2>
+            <input type="password" id="adminPassword" placeholder="أدخل كلمة المرور">
+            <button onclick="checkPassword()" class="btn-login">دخول</button>
+        </div>
+    </div>
+
+    <div class="admin-container" id="adminContent" style="display:none;">
+        <header class="admin-header">
+            <h1>لوحة تحكم مسابقة حامل القرآن</h1>
+            <div style="display:flex; gap:10px;">
+                <a href="print.html" target="_blank" class="btn btn-primary"
+                    style="padding: 10px 20px; font-size: 0.9rem;"><i class="fas fa-print"></i> طباعة الكشوف</a>
+                <button onclick="logout()" class="btn btn-secondary">تسجيل خروج</button>
+            </div>
+        </header>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <i class="fas fa-users"></i>
+                <h3>إجمالي المسجلين</h3>
+                <p id="totalCount">0</p>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-star"></i>
+                <h3>المستوى الأول</h3>
+                <p id="level1Count">0</p>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-star-half-alt"></i>
+                <h3>المستوى الثاني</h3>
+                <p id="level2Count">0</p>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-certificate"></i>
+                <h3>المستوى الثالث</h3>
+                <p id="level3Count">0</p>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-child"></i>
+                <h3>المستوى الرابع</h3>
+                <p id="level4Count">0</p>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-baby"></i>
+                <h3>المستوى الخامس</h3>
+                <p id="level5Count">0</p>
+            </div>
+        </div>
+
+        <div class="admin-tabs" style="margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
+            <button onclick="switchTab('registrations')" id="tabRegs" class="btn btn-primary">طلبات التسجيل</button>
+            <button onclick="switchTab('messages')" id="tabMsgs" class="btn btn-secondary">رسائل التواصل</button>
+            <button onclick="switchTab('motherAward')" id="tabMother" class="btn btn-secondary">الأم المثالية</button>
+            <button onclick="switchTab('maleTeacher')" id="tabMale" class="btn btn-secondary">المعلم المثالي</button>
+            <button onclick="switchTab('femaleTeacher')" id="tabFemale" class="btn btn-secondary">المعلمة
+                المثالية</button>
+            <button onclick="switchTab('settings')" id="tabSettings" class="btn btn-secondary"><i
+                    class="fas fa-cog"></i> إعدادات المسابقة</button>
+        </div>
+
+        <div id="registrationsSection">
+            <div class="registration-filters"
+                style="margin-bottom: 20px; display: flex; flex-direction: column; gap: 10px;">
+                <div
+                    style="display: flex; gap: 10px; flex-wrap: wrap; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 10px;">
+                    <span
+                        style="color: #d4af37; font-weight: bold; align-self: center; margin-left: 10px;">المستوى:</span>
+                    <button onclick="setLevelFilter('all')" id="btnLAll" class="btn btn-primary"
+                        style="padding: 5px 15px; font-size: 0.9rem;">الكل</button>
+                    <button onclick="setLevelFilter('المستوى الأول (القرآن كاملاً)')" id="btnL1"
+                        class="btn btn-secondary" style="padding: 5px 15px; font-size: 0.9rem;">الأول</button>
+                    <button onclick="setLevelFilter('المستوى الثاني (ثلاثة أرباع القرآن)')" id="btnL2"
+                        class="btn btn-secondary" style="padding: 5px 15px; font-size: 0.9rem;">الثاني</button>
+                    <button onclick="setLevelFilter('المستوى الثالث (نصف القرآن)')" id="btnL3" class="btn btn-secondary"
+                        style="padding: 5px 15px; font-size: 0.9rem;">الثالث</button>
+                    <button onclick="setLevelFilter('المستوى الرابع (ربع القرآن)')" id="btnL4" class="btn btn-secondary"
+                        style="padding: 5px 15px; font-size: 0.9rem;">الرابع</button>
+                    <button onclick="setLevelFilter('المستوى الخامس (البراعم - 5 أجزاء)')" id="btnL5"
+                        class="btn btn-secondary" style="padding: 5px 15px; font-size: 0.9rem;">الخامس</button>
+                </div>
+                <div
+                    style="display: flex; gap: 10px; flex-wrap: wrap; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 10px;">
+                    <span
+                        style="color: #d4af37; font-weight: bold; align-self: center; margin-left: 10px;">النوع:</span>
+                    <button onclick="setGenderFilter('all')" id="btnGAll" class="btn btn-primary"
+                        style="padding: 5px 15px; font-size: 0.9rem;">الجميع</button>
+                    <button onclick="setGenderFilter('بنين')" id="btnGBoy" class="btn btn-secondary"
+                        style="padding: 5px 15px; font-size: 0.9rem;">بنين</button>
+                    <button onclick="setGenderFilter('بنات')" id="btnGGirl" class="btn btn-secondary"
+                        style="padding: 5px 15px; font-size: 0.9rem;">بنات</button>
+                </div>
+                <!-- Search Bar -->
+                <div style="position: relative; width: 100%; max-width: 400px; margin-top: 10px;">
+                    <i class="fas fa-search"
+                        style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: #d4af37;"></i>
+                    <input type="text" id="searchInput" onkeyup="handleSearch()" placeholder="ابحث باسم المتسابق..."
+                        style="width: 100%; padding: 12px 45px 12px 15px; border-radius: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(212,175,55,0.3); color: #fff; font-family: 'Cairo', sans-serif;">
+                </div>
+            </div>
+
+            <div style="overflow-x: auto;">
+                <table class="registrations-table">
+                    <thead>
+                        <tr>
+                            <th>الاسم</th>
+                            <th>رقم الجلوس</th>
+                            <th>السن</th>
+                            <th>اللجنة</th>
+                            <th>النوع</th>
+                            <th>المستوى</th>
+                            <th>العنوان</th>
+                            <th>أرقام الهاتف</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="registrationsList">
+                        <!-- البيانات ستظهر هنا -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="imgPreviewModal" class="img-preview-modal">
+            <span class="close-preview" onclick="closeImgPreview()">&times;</span>
+            <img id="previewImg" src="">
+            <a id="downloadLink" href="#" download class="download-btn">
+                <i class="fas fa-download"></i> تحميل الصورة
+            </a>
+        </div>
+
+        <!-- Details Modal -->
+        <div id="detailsModal" class="img-preview-modal" style="display: none;">
+            <div class="login-card"
+                style="max-width: 600px; text-align: right; position: relative; background: #111; border: 2px solid #d4af37; padding: 30px;">
+                <span onclick="closeDetailsModal()"
+                    style="position: absolute; top: 15px; left: 15px; cursor: pointer; color: #d4af37; font-size: 1.5rem;">&times;</span>
+                <h2
+                    style="margin-bottom: 25px; border-bottom: 1px solid #d4af37; padding-bottom: 10px; color: #d4af37; font-size: 1.5rem;">
+                    <i class="fas fa-info-circle"></i> تفاصيل المتسابق
+                </h2>
+                <div id="studentDetailsContent"
+                    style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 0.95rem; color: #fff;">
+                    <!-- Details will be injected here -->
+                </div>
+            </div>
+        </div>
+
+        <div id="messagesSection" style="display:none;">
+            <div style="overflow-x: auto;">
+                <table class="registrations-table">
+                    <thead>
+                        <tr>
+                            <th>الاسم</th>
+                            <th>رقم الهاتف</th>
+                            <th>الرسالة</th>
+                            <th>التاريخ</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="messagesList">
+                        <!-- الرسائل ستظهر هنا -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="nominationsSection" style="display:none;">
+            <div style="overflow-x: auto;">
+                <table class="registrations-table">
+                    <thead>
+                        <tr>
+                            <th>المرشِّح</th>
+                            <th>رقم الهاتف</th>
+                            <th>المرشَّح له</th>
+                            <th>السبب</th>
+                            <th>التاريخ</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="nominationsList">
+                        <!-- الترشيحات ستظهر هنا -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="settingsSection" style="display:none;">
+            <div class="apply-card"
+                style="background: rgba(255,255,255,0.03); padding: 30px; border-radius: 20px; border: 1px solid #d4af37;">
+                <h2 style="color: #d4af37; margin-bottom: 30px;"><i class="fas fa-sliders-h"></i> التحكم في فتح وغلق
+                    التقديم</h2>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px;">
+                    <!-- Registration Toggle -->
+                    <div
+                        style="background: rgba(255,255,255,0.02); padding: 20px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1);">
+                        <h3 style="margin-bottom: 20px;"><i class="fas fa-edit"></i> تقديم المتسابقين</h3>
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <span id="regStatusLabel" style="font-weight: bold; color: #aaa;">الحالة الحالية: ...</span>
+                            <button id="regToggleButton" class="btn btn-primary"
+                                onclick="toggleStatus('registrationStatus')">جاري التحميل...</button>
+                        </div>
+                        <p style="font-size: 0.85rem; color: #888; margin-top: 15px;">عند الغلق، لن يتمكن المتسابقون من
+                            إرسال طلبات التسجيل وسيظهر لهم تنبيه بأن التقديم مغلق.</p>
+                    </div>
+
+                    <!-- Nominations Toggle -->
+                    <div
+                        style="background: rgba(255,255,255,0.02); padding: 20px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1);">
+                        <h3 style="margin-bottom: 20px;"><i class="fas fa-heart"></i> ترشيحات الأم/المعلم المثالي</h3>
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <span id="nomStatusLabel" style="font-weight: bold; color: #aaa;">الحالة الحالية: ...</span>
+                            <button id="nomToggleButton" class="btn btn-primary"
+                                onclick="toggleStatus('nominationStatus')">جاري التحميل...</button>
+                        </div>
+                        <p style="font-size: 0.85rem; color: #888; margin-top: 15px;">عند الغلق، لن تظهر استمارة الترشيح
+                            في الموقع وسيظهر بدلاً منها رسالة توضح موعد التقديم.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+
+    <script>
+        // --- Firebase Configuration ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyA6fnq6E4P4aLvtOLRfUogPNLV__MIlcD8",
+            authDomain: "dddd-3161a.firebaseapp.com",
+            projectId: "dddd-3161a",
+            storageBucket: "dddd-3161a.firebasestorage.app",
+            messagingSenderId: "295943367803",
+            appId: "1:295943367803:web:5c859045aad563af4a06de",
+            measurementId: "G-M3FJ7TGZYJ"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        function checkPassword() {
+            const pass = document.getElementById('adminPassword').value;
+            if (pass === '01000qwe') {
+                document.getElementById('loginOverlay').style.display = 'none';
+                document.getElementById('adminContent').style.display = 'block';
+                loadData();
+            } else {
+                alert('كلمة مرور خاطئة!');
+            }
+        }
+
+        function logout() {
+            location.reload();
+        }
+
+        function switchTab(tab) {
+            document.getElementById('nominationsSection').style.display = 'none';
+            document.getElementById('settingsSection').style.display = 'none';
+
+            document.getElementById('tabRegs').className = 'btn btn-secondary';
+            document.getElementById('tabMsgs').className = 'btn btn-secondary';
+            document.getElementById('tabMother').className = 'btn btn-secondary';
+            document.getElementById('tabMale').className = 'btn btn-secondary';
+            document.getElementById('tabFemale').className = 'btn btn-secondary';
+            document.getElementById('tabSettings').className = 'btn btn-secondary';
+
+            if (tab === 'registrations') {
+                document.getElementById('registrationsSection').style.display = 'block';
+                document.getElementById('tabRegs').className = 'btn btn-primary';
+            } else if (tab === 'messages') {
+                document.getElementById('messagesSection').style.display = 'block';
+                document.getElementById('tabMsgs').className = 'btn btn-primary';
+                loadMessages();
+            } else if (tab === 'motherAward') {
+                document.getElementById('nominationsSection').style.display = 'block';
+                document.getElementById('tabMother').className = 'btn btn-primary';
+                loadNominations('الأم المثالية');
+            } else if (tab === 'maleTeacher') {
+                document.getElementById('nominationsSection').style.display = 'block';
+                document.getElementById('tabMale').className = 'btn btn-primary';
+                loadNominations('المعلم المثالي');
+            } else if (tab === 'femaleTeacher') {
+                document.getElementById('nominationsSection').style.display = 'block';
+                document.getElementById('tabFemale').className = 'btn btn-primary';
+                loadNominations('المعلمة المثالية');
+            } else if (tab === 'settings') {
+                document.getElementById('settingsSection').style.display = 'block';
+                document.getElementById('tabSettings').className = 'btn btn-primary';
+                loadSettings();
+            }
+        }
+
+        let currentLevelFilter = 'all';
+        let currentGenderFilter = 'all';
+        let allRegistrations = [];
+
+        function setLevelFilter(val) {
+            currentLevelFilter = val;
+            updateFilterButtons('L', val);
+            renderRegistrations();
+        }
+
+        function setGenderFilter(val) {
+            currentGenderFilter = val;
+            updateFilterButtons('G', val);
+            renderRegistrations();
+        }
+
+        function updateFilterButtons(prefix, val) {
+            const btns = prefix === 'L' ?
+                ['all', 'المستوى الأول (القرآن كاملاً)', 'المستوى الثاني (ثلاثة أرباع القرآن)', 'المستوى الثالث (نصف القرآن)', 'المستوى الرابع (ربع القرآن)', 'المستوى الخامس (البراعم - 5 أجزاء)'] :
+                ['all', 'بنين', 'بنات'];
+
+            const btnIds = prefix === 'L' ?
+                ['btnLAll', 'btnL1', 'btnL2', 'btnL3', 'btnL4', 'btnL5'] :
+                ['btnGAll', 'btnGBoy', 'btnGGirl'];
+
+            btnIds.forEach((id, idx) => {
+                const btn = document.getElementById(id);
+                if (btns[idx] === val) {
+                    btn.className = 'btn btn-primary';
+                } else {
+                    btn.className = 'btn btn-secondary';
+                }
+            });
+        }
+
+        async function loadData() {
+            try {
+                db.collection('registrations').orderBy('timestamp', 'desc').onSnapshot((snapshot) => {
+                    allRegistrations = [];
+                    let stats = { total: 0, l1: 0, l2: 0, l3: 0, l4: 0, l5: 0 };
+
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        data.id = doc.id;
+                        allRegistrations.push(data);
+
+                        stats.total++;
+                        if (data.level) {
+                            if (data.level.includes('الأول')) stats.l1++;
+                            if (data.level.includes('الثاني')) stats.l2++;
+                            if (data.level.includes('الثالث')) stats.l3++;
+                            if (data.level.includes('الرابع')) stats.l4++;
+                            if (data.level.includes('الخامس')) stats.l5++;
+                        }
+                    });
+
+                    document.getElementById('totalCount').textContent = stats.total;
+                    document.getElementById('level1Count').textContent = stats.l1;
+                    document.getElementById('level2Count').textContent = stats.l2;
+                    document.getElementById('level3Count').textContent = stats.l3;
+                    document.getElementById('level4Count').textContent = stats.l4;
+                    document.getElementById('level5Count').textContent = stats.l5;
+
+                    renderRegistrations();
+                });
+            } catch (error) {
+                console.error("Error loading data: ", error);
+            }
+        }
+
+        async function deleteRegistration(id) {
+            if (confirm('⚠️ تنبيه: هل أنت متأكد من حذف هذا المتسابق نهائياً؟')) {
+                try {
+                    await db.collection('registrations').doc(id).delete();
+                } catch (error) {
+                    alert('خطأ أثناء الحذف');
+                }
+            }
+        }
+
+        function showImgPreview(url) {
+            const modal = document.getElementById('imgPreviewModal');
+            const img = document.getElementById('previewImg');
+            const downloadLink = document.getElementById('downloadLink');
+
+            img.src = url;
+            downloadLink.href = url;
+
+            modal.style.display = 'flex';
+        }
+
+        let searchQuery = '';
+
+        function handleSearch() {
+            searchQuery = document.getElementById('searchInput').value.trim();
+            renderRegistrations();
+        }
+
+        function closeImgPreview() {
+            document.getElementById('imgPreviewModal').style.display = 'none';
+        }
+
+        function renderRegistrations() {
+            const list = document.getElementById('registrationsList');
+            if (!list) return;
+            list.innerHTML = '';
+
+            let filtered = allRegistrations.filter(reg => {
+                const levelMatch = (currentLevelFilter === 'all' || reg.level === currentLevelFilter);
+                const genderMatch = (currentGenderFilter === 'all' || reg.gender === currentGenderFilter);
+                const nameMatch = searchQuery === '' || (reg.studentName && reg.studentName.includes(searchQuery));
+                return levelMatch && genderMatch && nameMatch;
+            });
+
+            if (filtered.length === 0) {
+                list.innerHTML = '<tr><td colspan="9" style="text-align:center;">لا توجد بيانات تطابق الاختيار</td></tr>';
+                return;
+            }
+
+            let grouped = {};
+            filtered.forEach(data => {
+                if (!grouped[data.level]) grouped[data.level] = [];
+                grouped[data.level].push(data);
+            });
+
+            for (const level in grouped) {
+                list.innerHTML += `<tr style="background: rgba(212, 175, 55, 0.2);"><td colspan="9" style="text-align:right; font-weight:bold; color:#d4af37; padding-right: 20px;">📂 ${level} (${grouped[level].length})</td></tr>`;
+
+                grouped[level].forEach(data => {
+                    const docsHtml = `
+                        <div style="display:flex; gap:8px; color: #d4af37; font-size: 0.9rem;">
+                            ${data.birthCertPath ? '<i class="fas fa-file-image" title="شهادة الميلاد"></i>' : '<i class="fas fa-file-image" style="color:#333" title="لا يوجد"></i>'}
+                            ${data.personalPhotoPath ? '<i class="fas fa-user-circle" title="الصورة الشخصية"></i>' : '<i class="fas fa-user-circle" style="color:#333" title="لا يوجد"></i>'}
+                        </div>
+                    `;
+
+                    const row = `
+                        <tr style="cursor: pointer;" onclick="showStudentDetails('${data.id}')">
+                            <td style="font-weight:bold;">${data.studentName}</td>
+                            <td><span style="background: rgba(212, 175, 55, 0.1); color: #d4af37; padding: 5px 12px; border-radius: 8px; font-weight: bold; border: 1px solid rgba(212, 175, 55, 0.3); font-size: 1.1rem;">${data.seatNumber || '-'}</span></td>
+                            <td style="font-weight:bold; color: #fff; font-size: 0.9rem;">
+                                ${data.ageYears || 0} س و ${data.ageMonths || 0} ش
+                            </td>
+                            <td style="font-weight: bold; color: #fff;">${data.committee || '-'}</td>
+                            <td><span class="badge ${data.gender === 'بنين' ? 'badge-blue' : 'badge-pink'}">${data.gender || '-'}</span></td>
+                            <td><div style="font-size:0.8rem;">${data.level}</div></td>
+                            <td>${docsHtml}</td>
+                            <td>
+                                <div style="font-size: 0.85rem; line-height: 1.4;">
+                                    <div title="المتسابق"><i class="fas fa-user-circle" style="font-size: 0.7rem; color: #d4af37;"></i> ${data.phone1}</div>
+                                    <div title="ولي الأمر" style="color: #aaa; border-top: 1px dashed rgba(255,255,255,0.1); margin-top: 2px; padding-top: 2px;"><i class="fas fa-users" style="font-size: 0.7rem;"></i> ${data.phone2}</div>
+                                </div>
+                            </td>
+                            <td onclick="event.stopPropagation()">
+                                <button onclick="deleteRegistration('${data.id}')" class="btn-view btn-delete"><i class="fas fa-trash"></i></button>
+                            </td>
+                        </tr>
+                    `;
+                    list.innerHTML += row;
+                });
+            }
+        }
+
+        // --- Configuration for Images & Subdomains ---
+        // غير هذا الرابط للدومين الحقيقي الخاص بك (مثلاً ahmedf.com)
+        const MAIN_IMAGES_DOMAIN = 'ahmedf.com';
+        const UPLOADS_PATH = 'uploads/';
+
+        function showStudentDetails(id) {
+            const data = allRegistrations.find(r => r.id === id);
+            if (!data) return;
+
+            const content = document.getElementById('studentDetailsContent');
+
+            // روابط الصور المباشرة (على السيرفر)
+            const birthCertUrl = data.birthCertPath ? UPLOADS_PATH + data.birthCertPath : null;
+            const personalPhotoUrl = data.personalPhotoPath ? UPLOADS_PATH + data.personalPhotoPath : null;
+
+            // رابط السبدومين الخاص بالطالب (بناءً على طلبك)
+            const studentSubdomain = data.seatNumber ? `https://${data.seatNumber}.${MAIN_IMAGES_DOMAIN}` : null;
+
+            const birthCertBtn = birthCertUrl ? `
+                <div style="display:flex; flex-direction:column; gap:5px; width:100%;">
+                    <button onclick="event.stopPropagation(); showImgPreview('${birthCertUrl}')" class="btn btn-primary" style="padding: 10px; font-size: 0.8rem;"><i class="fas fa-eye"></i> عرض الشهادة</button>
+                </div>` : '<span style="color:#666">لا يوجد</span>';
+
+            const photoBtn = personalPhotoUrl ? `
+                <div style="display:flex; flex-direction:column; gap:5px; width:100%;">
+                    <button onclick="event.stopPropagation(); showImgPreview('${personalPhotoUrl}')" class="btn btn-secondary" style="padding: 10px; font-size: 0.8rem;"><i class="fas fa-user"></i> عرض الشخصية</button>
+                </div>` : '<span style="color:#666">لا يوجد</span>';
+
+            content.innerHTML = `
+                <div style="grid-column: span 2; background: rgba(212, 175, 55, 0.1); padding: 10px; border-radius: 10px; border: 1px dashed #d4af37; text-align: center; margin-bottom: 10px;">
+                    <strong style="color: #d4af37; display: block; margin-bottom: 5px;"><i class="fas fa-globe"></i> رابط السبدومين لهذا الطالب:</strong>
+                    ${studentSubdomain ? `<a href="${studentSubdomain}" target="_blank" style="color: #fff; text-decoration: underline; font-size: 0.9rem;">${studentSubdomain}</a>` : '<span style="color:#666">لم يتم تخصيص رقم جلوس بعد</span>'}
+                </div>
+                <div><strong style="color: #d4af37;">الاسم:</strong><br>${data.studentName}</div>
+                <div><strong style="color: #d4af37;">الرقم القومي:</strong><br>${data.nationalID || '-'}</div>
+                <div><strong style="color: #d4af37;">السن:</strong><br>${data.formattedAge || (data.ageYears ? data.ageYears + ' سنة' : '-')}</div>
+                <div><strong style="color: #d4af37;">رقم الجلوس:</strong><br>${data.seatNumber || '-'}</div>
+                <div><strong style="color: #d4af37;">رقم اللجنة:</strong><br>${data.committee || '-'}</div>
+                <div><strong style="color: #d4af37;">النوع:</strong><br>${data.gender || '-'}</div>
+                <div><strong style="color: #d4af37;">المستوى:</strong><br>${data.level}</div>
+                <div><strong style="color: #d4af37;">هاتف المتسابق:</strong><br>${data.phone1}</div>
+                <div><strong style="color: #d4af37;">هاتف ولي الأمر:</strong><br>${data.phone2}</div>
+                <div><strong style="color: #d4af37;">هاتف الشيخ:</strong><br>${data.sheikhPhone}</div>
+                <div style="grid-column: span 2;"><strong style="color: #d4af37;">العنوان:</strong><br>${data.address}</div>
+                <div style="border-top: 1px solid #333; padding-top: 10px;">${birthCertBtn}</div>
+                <div style="border-top: 1px solid #333; padding-top: 10px;">${photoBtn}</div>
+                <div style="grid-column: span 2; font-size: 0.8rem; color: #888; border-top: 1px solid #222; margin-top: 10px; padding-top: 10px;">تاريخ التسجيل: ${data.timestamp ? new Date(data.timestamp.seconds * 1000).toLocaleString('ar-EG') : '-'}</div>
+            `;
+
+            document.getElementById('detailsModal').style.display = 'flex';
+        }
+
+        function closeDetailsModal() {
+            document.getElementById('detailsModal').style.display = 'none';
+        }
+
+        async function loadMessages() {
+            const list = document.getElementById('messagesList');
+            if (!list) return;
+            list.innerHTML = '<tr><td colspan="5" style="text-align:center;">جاري تحميل الرسائل...</td></tr>';
+
+            try {
+                db.collection('messages').onSnapshot((snapshot) => {
+                    list.innerHTML = '';
+                    if (snapshot.empty) {
+                        list.innerHTML = '<tr><td colspan="5" style="text-align:center;">لا توجد رسائل حالياً</td></tr>';
+                        return;
+                    }
+
+                    let messages = [];
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        data.id = doc.id;
+                        messages.push(data);
+                    });
+
+                    messages.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+
+                    messages.forEach(data => {
+                        const date = data.timestamp ? data.timestamp.toDate().toLocaleString('ar-EG') : 'قيد المعالجة';
+                        const row = `
+                            <tr>
+                                <td>${data.name}</td>
+                                <td>${data.phone}</td>
+                                <td style="max-width:300px;">${data.message}</td>
+                                <td>${date}</td>
+                                <td>
+                                    <button onclick="deleteMessage('${data.id}')" class="btn-view btn-delete"><i class="fas fa-trash"></i></button>
+                                </td>
+                            </tr>
+                        `;
+                        list.innerHTML += row;
+                    });
+                });
+            } catch (error) {
+                console.error("Error loading messages: ", error);
+            }
+        }
+
+        async function deleteMessage(id) {
+            if (confirm('هل أنت متأكد من حذف هذه الرسالة؟')) {
+                try {
+                    await db.collection('messages').doc(id).delete();
+                } catch (error) {
+                    alert('خطأ أثناء الحذف');
+                }
+            }
+        }
+
+        let currentNominationUnsubscribe = null;
+
+        async function loadNominations(type) {
+            if (currentNominationUnsubscribe) currentNominationUnsubscribe();
+
+            const list = document.getElementById('nominationsList');
+            if (!list) return;
+            list.innerHTML = '<tr><td colspan="6" style="text-align:center;">جاري تحميل الترشيحات...</td></tr>';
+
+            try {
+                currentNominationUnsubscribe = db.collection('nominations')
+                    .where('awardType', '==', type)
+                    .onSnapshot((snapshot) => {
+                        list.innerHTML = '';
+                        if (snapshot.empty) {
+                            list.innerHTML = '<tr><td colspan="6" style="text-align:center;">لا توجد ترشيحات حالياً لهذا القسم</td></tr>';
+                            return;
+                        }
+
+                        let noms = [];
+                        snapshot.forEach(doc => {
+                            const data = doc.data();
+                            data.id = doc.id;
+                            noms.push(data);
+                        });
+
+                        noms.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+
+                        noms.forEach(data => {
+                            const date = data.timestamp ? data.timestamp.toDate().toLocaleString('ar-EG') : 'قيد المعالجة';
+                            const row = `
+                                <tr>
+                                    <td>${data.nominatorName || 'فاعل خير'}</td>
+                                    <td>${data.nominatorPhone || '-'}</td>
+                                    <td>${data.nomineeName}</td>
+                                    <td style="max-width:300px;">${data.reason}</td>
+                                    <td>${date}</td>
+                                    <td>
+                                        <button onclick="deleteNomination('${data.id}')" class="btn-view btn-delete"><i class="fas fa-trash"></i></button>
+                                    </td>
+                                </tr>
+                            `;
+                            list.innerHTML += row;
+                        });
+                    });
+            } catch (error) {
+                console.error("Error loading nominations: ", error);
+            }
+        }
+
+        async function deleteNomination(id) {
+            if (confirm('هل أنت متأكد من حذف هذا الترشيح؟')) {
+                try {
+                    await db.collection('nominations').doc(id).delete();
+                } catch (error) {
+                    alert('خطأ أثناء الحذف');
+                }
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === "Escape") {
+                closeImgPreview();
+            }
+        });
+
+        // --- Settings Logic ---
+        let appSettings = {
+            registrationStatus: 'open',
+            nominationStatus: 'open'
+        };
+
+        async function loadSettings() {
+            try {
+                const doc = await db.collection('settings').doc('appConfig').get();
+                if (doc.exists) {
+                    appSettings = doc.data();
+                } else {
+                    // Initialize if not exists
+                    await db.collection('settings').doc('appConfig').set(appSettings);
+                }
+                updateSettingsUI();
+            } catch (error) {
+                console.error("Error loading settings:", error);
+            }
+        }
+
+        function updateSettingsUI() {
+            const regLabel = document.getElementById('regStatusLabel');
+            const regBtn = document.getElementById('regToggleButton');
+            const nomLabel = document.getElementById('nomStatusLabel');
+            const nomBtn = document.getElementById('nomToggleButton');
+
+            if (!regLabel || !regBtn || !nomLabel || !nomBtn) return;
+
+            if (appSettings.registrationStatus === 'open') {
+                regLabel.innerHTML = 'الحالة الحالية: <span style="color: #28a745;">مفتوح ✅</span>';
+                regBtn.textContent = 'غلق التقديم';
+                regBtn.style.background = '#ff4d4d';
+            } else {
+                regLabel.innerHTML = 'الحالة الحالية: <span style="color: #ff4d4d;">مغلق ❌</span>';
+                regBtn.textContent = 'فتح التقديم';
+                regBtn.style.background = '#28a745';
+            }
+
+            if (appSettings.nominationStatus === 'open') {
+                nomLabel.innerHTML = 'الحالة الحالية: <span style="color: #28a745;">مفتوح ✅</span>';
+                nomBtn.textContent = 'غلق الترشيحات';
+                nomBtn.style.background = '#ff4d4d';
+            } else {
+                nomLabel.innerHTML = 'الحالة الحالية: <span style="color: #ff4d4d;">مغلق ❌</span>';
+                nomBtn.textContent = 'فتح الترشيحات';
+                nomBtn.style.background = '#28a745';
+            }
+        }
+
+        async function toggleStatus(field) {
+            const newValue = appSettings[field] === 'open' ? 'closed' : 'open';
+            const confirmMsg = newValue === 'open' ? 'هل تريد فتح باب التقديم؟' : 'هل تريد غلق باب التقديم؟';
+
+            if (confirm(confirmMsg)) {
+                try {
+                    await db.collection('settings').doc('appConfig').update({
+                        [field]: newValue
+                    });
+                    appSettings[field] = newValue;
+                    updateSettingsUI();
+                } catch (error) {
+                    alert('حدث خطأ أثناء التحديث');
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>

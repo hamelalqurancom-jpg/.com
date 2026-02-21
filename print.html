@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>كشف المتقدمين للمسابقة | للطباعة</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Amiri:wght@700&family=Aref+Ruqaa:wght@700&display=swap"
+        rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: white;
+            color: black;
+            padding: 20px;
+            direction: rtl;
+        }
+
+        .header {
+            text-align: center;
+            border-bottom: 3px double #000;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .header h1 {
+            font-family: 'Aref Ruqaa', serif;
+            font-size: 45px;
+            margin: 0;
+            color: #000;
+            letter-spacing: 1px;
+        }
+
+        .header h1::before,
+        .header h1::after {
+            content: " ✽ ";
+            font-size: 30px;
+            vertical-align: middle;
+            color: #aa8c2c;
+        }
+
+        .header p {
+            font-size: 18px;
+            margin: 5px 0;
+            font-weight: bold;
+        }
+
+        .print-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 40px;
+        }
+
+        th,
+        td {
+            border: 1px solid #000;
+            padding: 10px;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+
+        tr:nth-child(even) {
+            background-color: #fafafa;
+        }
+
+        .footer {
+            margin-top: 50px;
+            display: flex;
+            justify-content: space-around;
+            font-weight: bold;
+        }
+
+        .no-print {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            background: #d4af37;
+            color: #000;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        @media print {
+            .no-print {
+                display: none;
+            }
+
+            body {
+                padding: 0;
+            }
+
+            table {
+                font-size: 11px;
+                /* Slightly smaller for 20 rows */
+                page-break-inside: auto;
+            }
+
+            tr {
+                page-break-inside: avoid;
+                page-break-after: auto;
+            }
+
+            .level-section {
+                page-break-after: always;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="no-print controls"
+        style="position: fixed; top: 20px; left: 20px; display: flex; gap: 10px; z-index: 1000; background: white; padding: 10px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+        <select id="levelFilter"
+            style="padding: 10px; border-radius: 5px; border: 1px solid #ccc; font-family: 'Cairo', sans-serif; cursor: pointer;">
+            <option value="all">كل المستويات</option>
+            <option value="المستوى الأول (القرآن كاملاً)">المستوى الأول (القرآن كاملاً)</option>
+            <option value="المستوى الثاني (ثلاثة أرباع القرآن)">المستوى الثاني (ثلاثة أرباع القرآن)</option>
+            <option value="المستوى الثالث (نصف القرآن)">المستوى الثالث (نصف القرآن)</option>
+            <option value="المستوى الرابع (ربع القرآن)">المستوى الرابع (ربع القرآن)</option>
+            <option value="المستوى الخامس (البراعم - 5 أجزاء)">المستوى الخامس (البراعم - 5 أجزاء)</option>
+        </select>
+        <select id="genderFilter"
+            style="padding: 10px; border-radius: 5px; border: 1px solid #ccc; font-family: 'Cairo', sans-serif; cursor: pointer;">
+            <option value="all">الجميع (بنين/بنات)</option>
+            <option value="بنين">بنين</option>
+            <option value="بنات">بنات</option>
+        </select>
+        <button class="no-print-btn" onclick="window.print()"
+            style="padding: 10px 20px; background: #d4af37; color: #000; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">اضغط
+            هنا للطباعة</button>
+    </div>
+
+    <div class="header">
+        <h1>مسابقة حامل القرآن الكريم بمسير</h1>
+        <p>تحت رعاية: مطبعة أبو خضرة و شباب مسير</p>
+        <p>كشف المتقدمين المسجلين إلكترونياً</p>
+    </div>
+
+    <div class="print-info">
+        <span id="regCount">إجمالي المسجلين: ...</span>
+        <span id="printDate">التاريخ: </span>
+    </div>
+
+    <div id="printContent">
+        <!-- Tables will be generated here -->
+        <div id="initialLoading" style="text-align: center; padding: 40px;">جاري جلب البيانات من السحابة...</div>
+    </div>
+
+    <div class="footer">
+        <div>توقيع مسؤول التنظيم</div>
+        <div>توقيع لجنة التحكيم</div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyA6fnq6E4P4aLvtOLRfUogPNLV__MIlcD8",
+            authDomain: "dddd-3161a.firebaseapp.com",
+            projectId: "dddd-3161a",
+            storageBucket: "dddd-3161a.firebasestorage.app",
+            messagingSenderId: "295943367803",
+            appId: "1:295943367803:web:5c859045aad563af4a06de",
+            measurementId: "G-M3FJ7TGZYJ"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        document.getElementById('printDate').innerText += new Date().toLocaleDateString('ar-EG');
+
+        let allData = [];
+
+        async function fetchForPrint() {
+            const printContent = document.getElementById('printContent');
+            const selectedLevel = document.getElementById('levelFilter').value;
+            const selectedGender = document.getElementById('genderFilter').value;
+
+            try {
+                if (allData.length === 0) {
+                    const snapshot = await db.collection('registrations').orderBy('timestamp', 'asc').get();
+                    if (snapshot.empty) {
+                        printContent.innerHTML = '<div style="text-align:center; padding: 20px;">لا توجد بيانات حالياً</div>';
+                        return;
+                    }
+                    snapshot.forEach(doc => allData.push(doc.data()));
+                }
+
+                renderTables(selectedLevel, selectedGender);
+
+            } catch (error) {
+                console.error(error);
+                printContent.innerHTML = '<div style="text-align:center; padding: 20px; color: red;">حدث خطأ أثناء جلب البيانات</div>';
+            }
+        }
+
+        function renderTables(levelFilter, genderFilter) {
+            const printContent = document.getElementById('printContent');
+            printContent.innerHTML = '';
+
+            let filteredData = allData.filter(d => {
+                const levelMatch = (levelFilter === 'all' || d.level === levelFilter);
+                const genderMatch = (genderFilter === 'all' || d.gender === genderFilter);
+                return levelMatch && genderMatch;
+            });
+
+            if (filteredData.length === 0) {
+                printContent.innerHTML = '<div style="text-align:center; padding: 20px;">لا توجد بيانات تطابق هذه الاختيارات</div>';
+                document.getElementById('regCount').innerText = `إجمالي المعروض: 0`;
+                return;
+            }
+
+            // Group the data by Level and then by Committee
+            let grouped = {};
+            filteredData.forEach(data => {
+                if (!grouped[data.level]) grouped[data.level] = {};
+                const comm = data.committee || 1;
+                if (!grouped[data.level][comm]) grouped[data.level][comm] = [];
+                grouped[data.level][comm].push(data);
+            });
+
+            for (const level in grouped) {
+                for (const comm in grouped[level]) {
+                    const section = document.createElement('div');
+                    section.className = 'level-section';
+
+                    const levelHeader = document.createElement('h2');
+                    levelHeader.style.textAlign = 'center';
+                    levelHeader.style.margin = '20px 0 10px';
+                    levelHeader.style.padding = '10px';
+                    levelHeader.style.background = '#f2f2f2';
+                    levelHeader.style.border = '2px solid #000';
+                    levelHeader.innerHTML = `${level} <br> <span style="font-size: 1.2rem; color: #aa8c2c;">لجنة رقم (${comm})</span>`;
+                    section.appendChild(levelHeader);
+
+                    const table = document.createElement('table');
+                    table.innerHTML = `
+                        <thead>
+                            <tr>
+                                <th style="width: 5%">م</th>
+                                <th style="width: 10%">رقم الجلوس</th>
+                                <th style="width: 5%">السن</th>
+                                <th style="width: 10%">اللجنة</th>
+                                <th style="width: 25%">اسم المتسابق</th>
+                                <th style="width: 8%">النوع</th>
+                                <th style="width: 15%">أرقام الهاتف</th>
+                                <th style="width: 4%">ش</th>
+                                <th style="width: 4%">ح</th>
+                                <th style="width: 7%">الدرجة</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    `;
+                    const tbody = table.querySelector('tbody');
+                    let counter = 1;
+
+                    grouped[level][comm].forEach(data => {
+                        const row = `
+                            <tr>
+                                <td>${counter++}</td>
+                                <td style="font-weight: bold; background: #fefefe;">${data.seatNumber || '-'}</td>
+                                <td style="font-weight: bold; font-size: 10px;">${data.ageYears || 0}س و ${data.ageMonths || 0}ش</td>
+                                <td style="font-weight: bold; color: #aa8c2c;">${data.committee || '-'}</td>
+                                <td style="text-align: right; font-weight: bold;">${data.studentName}</td>
+                                <td>${data.gender || '-'}</td>
+                                <td>
+                                    <div style="font-size: 10px; line-height: 1.2;">
+                                        <div style="font-weight: bold;">${data.phone1}</div>
+                                        <div style="color: #666; border-top: 1px solid #eee;">${data.phone2}</div>
+                                    </div>
+                                </td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                        `;
+                        tbody.innerHTML += row;
+                    });
+                    section.appendChild(table);
+                    printContent.appendChild(section);
+                }
+            }
+
+            document.getElementById('regCount').innerText = `إجمالي المعروض: ${filteredData.length}`;
+        }
+
+        document.getElementById('levelFilter').addEventListener('change', () => {
+            renderTables(document.getElementById('levelFilter').value, document.getElementById('genderFilter').value);
+        });
+
+        document.getElementById('genderFilter').addEventListener('change', () => {
+            renderTables(document.getElementById('levelFilter').value, document.getElementById('genderFilter').value);
+        });
+
+        fetchForPrint();
+    </script>
+</body>
+
+</html>
