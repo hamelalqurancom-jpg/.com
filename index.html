@@ -567,13 +567,14 @@
                         </div>
                         <ul class="notes-list">
                             <li><i class="fas fa-info-circle"></i> ألا يزيد عمر المتسابق عن 15 سنة.</li>
-                            <li><i class="fas fa-wallet"></i> رسم الاشتراك 20 جنيهاً تُحصل يوم الاختبار مع الصورة
-                                الشخصية وشهادة ميلاد حديثة.</li>
+                            <li><i class="fas fa-wallet"></i> رسم الاشتراك 20 جنيهاً تُحصل يوم الاختبار.</li>
+                            <li><i class="fab fa-google-drive"></i> يفضل رفع (صورة شهادة الميلاد + الصورة الشخصية) على
+                                جوجل درايف ووضع الروابط بالأسفل.</li>
+                            <li><i class="fas fa-file-invoice"></i> في حال تعذر توفير الروابط، **يجب إحضار أصل شهادة
+                                الميلاد وصورة شخصية حديثة** معك يوم الاختبار.</li>
                             <li><i class="fas fa-home"></i> يجب أن يكون المتسابق من أبناء مدينة مسير.</li>
                             <li class="note-warning"><i class="fas fa-times-circle"></i> في حال عدم الالتزام بالشروط
-                                السابقة كاملة، يعتبر المتسابق مستبعداً ولن يتم اختباره.</li>
-                            <li class="note-warning"><i class="fas fa-user-shield"></i> سوف يتم التحقق من كافة البيانات
-                                عند المراجعة.</li>
+                                السابقة كاملة، يعتبر المتسابق مستبعداً من المسابقة.</li>
                         </ul>
                     </div>
 
@@ -597,19 +598,22 @@
 
                             <div class="input-group">
                                 <label for="birthCertLink"><i class="fab fa-google-drive"></i> رابط شهادة الميلاد
-                                    (Google Drive)</label>
+                                    (اختياري)</label>
                                 <input type="url" id="birthCertLink" name="birthCertLink"
-                                    placeholder="أدخل رابط جوجل درايف لشهادة الميلاد" required>
-                                <p style="font-size: 0.8rem; color: #888; margin-top: 5px;">* يرجى رفع الصورة على Google
-                                    Drive ووضع الرابط هنا مع التأكد من أن الرابط "عام" (Anyone with the link).</p>
+                                    placeholder="أدخل رابط جوجل درايف لشهادة الميلاد">
                             </div>
-
                             <div class="input-group">
                                 <label for="personalPhotoLink"><i class="fab fa-google-drive"></i> رابط الصورة الشخصية
                                     (اختياري)</label>
                                 <input type="url" id="personalPhotoLink" name="personalPhotoLink"
                                     placeholder="أدخل رابط جوجل درايف للصورة الشخصية">
                             </div>
+
+                            <p
+                                style="grid-column: span 2; font-size: 0.85rem; color: #d4af37; margin-top: -5px; margin-bottom: 10px; line-height: 1.4;">
+                                * ملاحظة: في حال تعذر توفير روابط الصور أعلاه، يرجى إحضار أصل شهادة الميلاد والصورة
+                                الشخصية معك في يوم الاختبار.
+                            </p>
 
                             <div class="input-group">
                                 <label for="gender"><i class="fas fa-venus-mars"></i> النوع</label>

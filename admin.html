@@ -259,6 +259,8 @@
         </div>
     </div>
 
+
+
     <div class="admin-container" id="adminContent" style="display:none;">
         <header class="admin-header">
             <h1>لوحة تحكم مسابقة حامل القرآن</h1>
@@ -745,8 +747,7 @@
             }
         }
 
-        // --- Configuration for Subdomains ---
-        const MAIN_IMAGES_DOMAIN = 'hamel-alquran.com'; // تم تحديث الدومين الافتراضي
+        // --- Admin Logic ---
 
         function showStudentDetails(id) {
             const data = allRegistrations.find(r => r.id === id);
@@ -758,8 +759,7 @@
             const birthCertUrl = data.birthCertPath || null;
             const personalPhotoUrl = data.personalPhotoPath || null;
 
-            // رابط السبدومين الخاص بالطالب
-            const studentSubdomain = data.seatNumber ? `https://${data.seatNumber}.${MAIN_IMAGES_DOMAIN}` : null;
+
 
             const birthCertBtn = birthCertUrl ? `
                 <div style="display:flex; flex-direction:column; gap:5px; width:100%;">
@@ -776,10 +776,7 @@
                 </div>` : '<span style="color:#666">لا يوجد رابط صورة</span>';
 
             content.innerHTML = `
-                <div style="grid-column: span 2; background: rgba(212, 175, 55, 0.1); padding: 10px; border-radius: 10px; border: 1px dashed #d4af37; text-align: center; margin-bottom: 10px;">
-                    <strong style="color: #d4af37; display: block; margin-bottom: 5px;"><i class="fas fa-globe"></i> رابط السبدومين لهذا الطالب:</strong>
-                    ${studentSubdomain ? `<a href="${studentSubdomain}" target="_blank" style="color: #fff; text-decoration: underline; font-size: 0.9rem;">${studentSubdomain}</a>` : '<span style="color:#666">لم يتم تخصيص رقم جلوس بعد</span>'}
-                </div>
+
                 <div><strong style="color: #d4af37;">الاسم:</strong><br>${data.studentName}</div>
                 <div><strong style="color: #d4af37;">الرقم القومي:</strong><br>${data.nationalID || '-'}</div>
                 <div><strong style="color: #d4af37;">السن:</strong><br>${data.formattedAge || (data.ageYears ? data.ageYears + ' سنة' : '-')}</div>
@@ -798,6 +795,8 @@
 
             document.getElementById('detailsModal').style.display = 'flex';
         }
+
+
 
         function closeDetailsModal() {
             document.getElementById('detailsModal').style.display = 'none';
@@ -828,7 +827,7 @@
                     messages.forEach(data => {
                         const date = data.timestamp ? data.timestamp.toDate().toLocaleString('ar-EG') : 'قيد المعالجة';
                         const row = `
-                            <tr>
+                < tr >
                                 <td>${data.name}</td>
                                 <td>${data.phone}</td>
                                 <td style="max-width:300px;">${data.message}</td>
@@ -836,8 +835,8 @@
                                 <td>
                                     <button onclick="deleteMessage('${data.id}')" class="btn-view btn-delete"><i class="fas fa-trash"></i></button>
                                 </td>
-                            </tr>
-                        `;
+                            </tr >
+                `;
                         list.innerHTML += row;
                     });
                 });
@@ -887,7 +886,7 @@
                         noms.forEach(data => {
                             const date = data.timestamp ? data.timestamp.toDate().toLocaleString('ar-EG') : 'قيد المعالجة';
                             const row = `
-                                <tr>
+                < tr >
                                     <td>${data.nominatorName || 'فاعل خير'}</td>
                                     <td>${data.nominatorPhone || '-'}</td>
                                     <td>${data.nomineeName}</td>
@@ -896,8 +895,8 @@
                                     <td>
                                         <button onclick="deleteNomination('${data.id}')" class="btn-view btn-delete"><i class="fas fa-trash"></i></button>
                                     </td>
-                                </tr>
-                            `;
+                                </tr >
+                `;
                             list.innerHTML += row;
                         });
                     });
@@ -1026,7 +1025,7 @@
             allBlockedStudents.forEach(data => {
                 const date = data.blockedAt ? data.blockedAt.toDate().toLocaleString('ar-EG') : 'قيد المعالجة';
                 const row = `
-                    <tr>
+                < tr >
                         <td style="font-weight:bold;">${data.studentName}</td>
                         <td>${data.nationalID}</td>
                         <td>${data.ageYears} س و ${data.ageMonths} ش</td>
@@ -1035,7 +1034,7 @@
                         <td>
                             <button onclick="deleteBlockedStudent('${data.id}')" class="btn-view btn-delete"><i class="fas fa-trash"></i></button>
                         </td>
-                    </tr>
+                    </tr >
                 `;
                 list.innerHTML += row;
             });
