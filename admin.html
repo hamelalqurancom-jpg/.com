@@ -300,6 +300,11 @@
                 <h3>المستوى الخامس</h3>
                 <p id="level5Count">0</p>
             </div>
+            <div class="stat-card" style="border-color: rgba(255, 77, 77, 0.3);">
+                <i class="fas fa-user-slash" style="color: #ff4d4d;"></i>
+                <h3>طلاب محظورين</h3>
+                <p id="blockedCount" style="color: #ff4d4d;">0</p>
+            </div>
         </div>
 
         <div class="admin-tabs" style="margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
@@ -309,6 +314,8 @@
             <button onclick="switchTab('maleTeacher')" id="tabMale" class="btn btn-secondary">المعلم المثالي</button>
             <button onclick="switchTab('femaleTeacher')" id="tabFemale" class="btn btn-secondary">المعلمة
                 المثالية</button>
+            <button onclick="switchTab('blocked')" id="tabBlocked" class="btn btn-secondary"><i
+                    class="fas fa-user-slash"></i> الطلاب المحظورين</button>
             <button onclick="switchTab('settings')" id="tabSettings" class="btn btn-secondary"><i
                     class="fas fa-cog"></i> إعدادات المسابقة</button>
         </div>
@@ -439,6 +446,26 @@
             </div>
         </div>
 
+        <div id="blockedSection" style="display:none;">
+            <div style="overflow-x: auto;">
+                <table class="registrations-table">
+                    <thead>
+                        <tr>
+                            <th>الاسم</th>
+                            <th>الرقم القومي</th>
+                            <th>السن</th>
+                            <th>السبب</th>
+                            <th>التاريخ</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="blockedList">
+                        <!-- الطلاب المحظورين سيظهرون هنا -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         <div id="settingsSection" style="display:none;">
             <div class="apply-card"
                 style="background: rgba(255,255,255,0.03); padding: 30px; border-radius: 20px; border: 1px solid #d4af37;">
@@ -485,13 +512,13 @@
     <script>
         // --- Firebase Configuration ---
         const firebaseConfig = {
-            apiKey: "AIzaSyA6fnq6E4P4aLvtOLRfUogPNLV__MIlcD8",
-            authDomain: "dddd-3161a.firebaseapp.com",
-            projectId: "dddd-3161a",
-            storageBucket: "dddd-3161a.firebasestorage.app",
-            messagingSenderId: "295943367803",
-            appId: "1:295943367803:web:5c859045aad563af4a06de",
-            measurementId: "G-M3FJ7TGZYJ"
+            apiKey: "AIzaSyCsVH5BVV9abx66UicOa51T1qADmUVrd7U",
+            authDomain: "hamel-b7a68.firebaseapp.com",
+            projectId: "hamel-b7a68",
+            storageBucket: "hamel-b7a68.firebasestorage.app",
+            messagingSenderId: "818022836347",
+            appId: "1:818022836347:web:ebcdef3f19c53cd1ef1ade",
+            measurementId: "G-HEMLZDRBS3"
         };
 
         firebase.initializeApp(firebaseConfig);
@@ -516,11 +543,8 @@
             document.getElementById('nominationsSection').style.display = 'none';
             document.getElementById('settingsSection').style.display = 'none';
 
-            document.getElementById('tabRegs').className = 'btn btn-secondary';
-            document.getElementById('tabMsgs').className = 'btn btn-secondary';
-            document.getElementById('tabMother').className = 'btn btn-secondary';
-            document.getElementById('tabMale').className = 'btn btn-secondary';
             document.getElementById('tabFemale').className = 'btn btn-secondary';
+            document.getElementById('tabBlocked').className = 'btn btn-secondary';
             document.getElementById('tabSettings').className = 'btn btn-secondary';
 
             if (tab === 'registrations') {
@@ -542,6 +566,10 @@
                 document.getElementById('nominationsSection').style.display = 'block';
                 document.getElementById('tabFemale').className = 'btn btn-primary';
                 loadNominations('المعلمة المثالية');
+            } else if (tab === 'blocked') {
+                document.getElementById('blockedSection').style.display = 'block';
+                document.getElementById('tabBlocked').className = 'btn btn-primary';
+                loadBlockedStudents();
             } else if (tab === 'settings') {
                 document.getElementById('settingsSection').style.display = 'block';
                 document.getElementById('tabSettings').className = 'btn btn-primary';
@@ -613,6 +641,11 @@
                     document.getElementById('level5Count').textContent = stats.l5;
 
                     renderRegistrations();
+                });
+
+                // Also fetch blocked students count for stats
+                db.collection('blockedStudents').onSnapshot((snapshot) => {
+                    document.getElementById('blockedCount').textContent = snapshot.size;
                 });
             } catch (error) {
                 console.error("Error loading data: ", error);
@@ -712,10 +745,8 @@
             }
         }
 
-        // --- Configuration for Images & Subdomains ---
-        // غير هذا الرابط للدومين الحقيقي الخاص بك (مثلاً ahmedf.com)
-        const MAIN_IMAGES_DOMAIN = 'ahmedf.com';
-        const UPLOADS_PATH = 'uploads/';
+        // --- Configuration for Subdomains ---
+        const MAIN_IMAGES_DOMAIN = 'hamel-alquran.com'; // تم تحديث الدومين الافتراضي
 
         function showStudentDetails(id) {
             const data = allRegistrations.find(r => r.id === id);
@@ -723,22 +754,26 @@
 
             const content = document.getElementById('studentDetailsContent');
 
-            // روابط الصور المباشرة (على السيرفر)
-            const birthCertUrl = data.birthCertPath ? UPLOADS_PATH + data.birthCertPath : null;
-            const personalPhotoUrl = data.personalPhotoPath ? UPLOADS_PATH + data.personalPhotoPath : null;
+            // روابط الجوجل درايف
+            const birthCertUrl = data.birthCertPath || null;
+            const personalPhotoUrl = data.personalPhotoPath || null;
 
-            // رابط السبدومين الخاص بالطالب (بناءً على طلبك)
+            // رابط السبدومين الخاص بالطالب
             const studentSubdomain = data.seatNumber ? `https://${data.seatNumber}.${MAIN_IMAGES_DOMAIN}` : null;
 
             const birthCertBtn = birthCertUrl ? `
                 <div style="display:flex; flex-direction:column; gap:5px; width:100%;">
-                    <button onclick="event.stopPropagation(); showImgPreview('${birthCertUrl}')" class="btn btn-primary" style="padding: 10px; font-size: 0.8rem;"><i class="fas fa-eye"></i> عرض الشهادة</button>
-                </div>` : '<span style="color:#666">لا يوجد</span>';
+                    <a href="${birthCertUrl}" target="_blank" class="btn btn-primary" style="padding: 10px; font-size: 0.8rem; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 5px;">
+                        <i class="fab fa-google-drive"></i> عرض شهادة الميلاد
+                    </a>
+                </div>` : '<span style="color:#666">لا يوجد رابط شهادة</span>';
 
             const photoBtn = personalPhotoUrl ? `
                 <div style="display:flex; flex-direction:column; gap:5px; width:100%;">
-                    <button onclick="event.stopPropagation(); showImgPreview('${personalPhotoUrl}')" class="btn btn-secondary" style="padding: 10px; font-size: 0.8rem;"><i class="fas fa-user"></i> عرض الشخصية</button>
-                </div>` : '<span style="color:#666">لا يوجد</span>';
+                    <a href="${personalPhotoUrl}" target="_blank" class="btn btn-secondary" style="padding: 10px; font-size: 0.8rem; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 5px;">
+                        <i class="fab fa-google-drive"></i> عرض الصورة الشخصية
+                    </a>
+                </div>` : '<span style="color:#666">لا يوجد رابط صورة</span>';
 
             content.innerHTML = `
                 <div style="grid-column: span 2; background: rgba(212, 175, 55, 0.1); padding: 10px; border-radius: 10px; border: 1px dashed #d4af37; text-align: center; margin-bottom: 10px;">
@@ -950,6 +985,68 @@
                     updateSettingsUI();
                 } catch (error) {
                     alert('حدث خطأ أثناء التحديث');
+                }
+            }
+        }
+
+        // --- Blocked Students Management ---
+        let allBlockedStudents = [];
+        async function loadBlockedStudents() {
+            const list = document.getElementById('blockedList');
+            if (!list) return;
+            list.innerHTML = '<tr><td colspan="6" style="text-align:center;">جاري تحميل البيانات...</td></tr>';
+
+            try {
+                db.collection('blockedStudents').orderBy('blockedAt', 'desc').onSnapshot((snapshot) => {
+                    allBlockedStudents = [];
+                    list.innerHTML = '';
+                    if (snapshot.empty) {
+                        list.innerHTML = '<tr><td colspan="6" style="text-align:center;">لا يوجد طلاب محظورين حالياً</td></tr>';
+                        return;
+                    }
+
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        data.id = doc.id;
+                        allBlockedStudents.push(data);
+                    });
+
+                    renderBlockedStudents();
+                });
+            } catch (error) {
+                console.error("Error loading blocked students: ", error);
+            }
+        }
+
+        function renderBlockedStudents() {
+            const list = document.getElementById('blockedList');
+            if (!list) return;
+            list.innerHTML = '';
+
+            allBlockedStudents.forEach(data => {
+                const date = data.blockedAt ? data.blockedAt.toDate().toLocaleString('ar-EG') : 'قيد المعالجة';
+                const row = `
+                    <tr>
+                        <td style="font-weight:bold;">${data.studentName}</td>
+                        <td>${data.nationalID}</td>
+                        <td>${data.ageYears} س و ${data.ageMonths} ش</td>
+                        <td style="color:#ff4d4d; font-weight: bold;">${data.reason}</td>
+                        <td>${date}</td>
+                        <td>
+                            <button onclick="deleteBlockedStudent('${data.id}')" class="btn-view btn-delete"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+                list.innerHTML += row;
+            });
+        }
+
+        async function deleteBlockedStudent(id) {
+            if (confirm('هل أنت متأكد من حذف هذا السجل من قائمة المحظورين؟')) {
+                try {
+                    await db.collection('blockedStudents').doc(id).delete();
+                } catch (error) {
+                    alert('حدث خطأ أثناء الحذف');
                 }
             }
         }

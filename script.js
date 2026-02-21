@@ -182,13 +182,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Firebase Configuration ---
     const firebaseConfig = {
-        apiKey: "AIzaSyA6fnq6E4P4aLvtOLRfUogPNLV__MIlcD8",
-        authDomain: "dddd-3161a.firebaseapp.com",
-        projectId: "dddd-3161a",
-        storageBucket: "dddd-3161a.firebasestorage.app",
-        messagingSenderId: "295943367803",
-        appId: "1:295943367803:web:5c859045aad563af4a06de",
-        measurementId: "G-M3FJ7TGZYJ"
+        apiKey: "AIzaSyCsVH5BVV9abx66UicOa51T1qADmUVrd7U",
+        authDomain: "hamel-b7a68.firebaseapp.com",
+        projectId: "hamel-b7a68",
+        storageBucket: "hamel-b7a68.firebasestorage.app",
+        messagingSenderId: "818022836347",
+        appId: "1:818022836347:web:ebcdef3f19c53cd1ef1ade",
+        measurementId: "G-HEMLZDRBS3"
     };
 
     // Initialize Firebase
@@ -411,8 +411,25 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             try {
-                // --- 2. Duplicate Check (Name and National ID) ---
                 if (isFirebaseConfigured && db) {
+                    // --- 2. Check Block List (Name or National ID) ---
+                    const blockCheckName = await db.collection('blockedStudents')
+                        .where('studentName', '==', studentName)
+                        .limit(1)
+                        .get();
+
+                    const blockCheckID = await db.collection('blockedStudents')
+                        .where('nationalID', '==', nationalID)
+                        .limit(1)
+                        .get();
+
+                    if (!blockCheckName.empty || !blockCheckID.empty) {
+                        alert('⚠️ عذراً، لا يمكن قبول هذا الطلب. يرجى مراجعة إدارة المسابقة إذا كنت تعتقد أن هناك خطأ.');
+                        resetSubmitBtn();
+                        return;
+                    }
+
+                    // --- 3. Duplicate Check in active registrations ---
                     const idCheck = await db.collection('registrations')
                         .where('nationalID', '==', nationalID)
                         .limit(1)
@@ -430,37 +447,16 @@ document.addEventListener('DOMContentLoaded', () => {
                         .get();
 
                     if (!nameCheck.empty) {
-                        alert('⚠️ عذراً، هذا الاسم مسجل مسبقاً في أحد المستويات.');
+                        alert('⚠️ عذراً، هذا الاسم مسجل مسبقاً.');
                         resetSubmitBtn();
                         return;
                     }
                 }
 
-                // --- 3. File Upload handling ---
-                if (btnText) btnText.textContent = 'جاري رفع الصور...';
+                // --- 4. Prepare Data ---
+                const birthCertLink = formData.get('birthCertLink') || '';
+                const personalPhotoLink = formData.get('personalPhotoLink') || '';
 
-                const uploadFormData = new FormData();
-                const idFile = document.getElementById('idFile')?.files[0];
-                const photoFile = document.getElementById('personalPhoto')?.files[0];
-
-                if (idFile) uploadFormData.append('birth_cert', idFile);
-                if (photoFile) uploadFormData.append('personal_photo', photoFile);
-
-                let uploadedFiles = {};
-                if (idFile || photoFile) {
-                    const uploadResponse = await fetch('upload.php', {
-                        method: 'POST',
-                        body: uploadFormData
-                    });
-                    const uploadResult = await uploadResponse.json();
-                    if (uploadResult.success) {
-                        uploadedFiles = uploadResult.files;
-                    } else {
-                        throw new Error('فشل رفع الصور: ' + uploadResult.error);
-                    }
-                }
-
-                // 4. Prepare Data for Firestore
                 const registrationData = {
                     studentName,
                     nationalID,
@@ -477,10 +473,25 @@ document.addEventListener('DOMContentLoaded', () => {
                     sheikhName: formData.get('sheikhName'),
                     sheikhPhone: formData.get('sheikhPhone'),
                     level: formData.get('level'),
-                    birthCertPath: uploadedFiles.birth_cert || '',
-                    personalPhotoPath: uploadedFiles.personal_photo || '',
+                    birthCertPath: birthCertLink, // Now storing the link directly
+                    personalPhotoPath: personalPhotoLink,
                     timestamp: firebase.firestore.FieldValue.serverTimestamp()
                 };
+
+                // --- 5. Age Validation (Block if > 15) ---
+                if (ageInfo.years > 15) {
+                    if (isFirebaseConfigured && db) {
+                        // Register as blocked
+                        await db.collection('blockedStudents').add({
+                            ...registrationData,
+                            reason: 'تجاوز السن القانوني (15 عاماً)',
+                            blockedAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    }
+                    alert(`⚠️ عذراً، تبيّن أن سن المتسابق (${ageInfo.years} سنة) يتجاوز الحد المسموح به للمشاركة في المسابقة (15 سنة). تم تسجيل المحاولة ولن يتم حجز رقم جلوس.`);
+                    resetSubmitBtn();
+                    return;
+                }
 
                 if (isFirebaseConfigured && db) {
                     if (btnText) btnText.textContent = 'جاري حجز رقم الجلوس...';
@@ -537,14 +548,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 localStorage.setItem(`registered_id_${nationalID}`, 'true');
                 registrationForm.reset();
                 if (agreeTerms) agreeTerms.checked = false;
-
-                // Reset file upload UI
-                fileInputs.forEach(input => {
-                    const container = input.closest('.custom-file-upload');
-                    if (container) container.classList.remove('has-file');
-                    const textSpan = container ? container.querySelector('.file-text') : null;
-                    if (textSpan) textSpan.textContent = input.id === 'idFile' ? 'اختر صورة شهادة الميلاد' : 'اختر الصورة الشخصية';
-                });
 
             } catch (error) {
                 console.error("Submission Error:", error);
@@ -676,211 +679,6 @@ document.addEventListener('DOMContentLoaded', () => {
             } finally {
                 submitNomBtn.disabled = false;
                 submitNomBtn.innerHTML = originalText;
-            }
-        });
-    }
-    // --- OCR Birth Certificate Extraction (Advanced Version) ---
-    const scanIDBtn = document.getElementById('scanIDBtn');
-    const idFile = document.getElementById('idFile');
-    const ocrStatus = document.getElementById('ocrStatus');
-    const nationalIDInput = document.getElementById('nationalID');
-    const studentNameInput = document.getElementById('studentName');
-
-    if (scanIDBtn && idFile) {
-        scanIDBtn.addEventListener('click', () => {
-            // Reset fields before scanning
-            nationalIDInput.value = "";
-            ocrStatus.style.display = 'block';
-            ocrStatus.innerHTML = '<span class="ocr-loader"><i class="fas fa-spinner fa-spin"></i> افتح الكاميرا أو اختر صورة واضحة...</span>';
-            idFile.click();
-        });
-
-        idFile.addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            ocrStatus.innerHTML = '<span class="ocr-loader"><i class="fas fa-spinner fa-spin"></i> جاري تحسين جودة الصورة...</span>';
-
-            try {
-                // Advanced Pre-processing
-                const processedImg = await preprocessImage(file);
-
-                ocrStatus.innerHTML = '<span class="ocr-loader"><i class="fas fa-spinner fa-spin"></i> جاري قراءة البيانات... (0%)</span>';
-
-                const result = await Tesseract.recognize(processedImg, 'ara+eng', {
-                    logger: m => {
-                        if (m.status === 'recognizing text') {
-                            const progress = Math.round(m.progress * 100);
-                            ocrStatus.innerHTML = `<span class="ocr-loader"><i class="fas fa-spinner fa-spin"></i> جاري قراءة البيانات... (${progress}%)</span>`;
-                        }
-                    }
-                });
-
-                const fullText = result.data.text;
-                console.log("OCR Extracted Text:", fullText);
-
-                // --- 1. National ID Extraction ---
-                // Clean the text from any spaces between digits
-                const digitsOnly = fullText.replace(/\s/g, '');
-                const idMatch = digitsOnly.match(/\d{14}/);
-                let foundID = idMatch ? idMatch[0] : null;
-
-                // --- 2. Advanced Name Extraction ---
-                const cleanLines = fullText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-                let childFirstName = "";
-                let fatherName = "";
-
-                for (let i = 0; i < cleanLines.length; i++) {
-                    const line = cleanLines[i];
-
-                    // Look for Child's Name (اسم المولود)
-                    if (line.includes('اسم المولود') || line.includes('المولود')) {
-                        childFirstName = line.replace(/.*(اسم المولود|المولود)[:\/\- ]+/, '').trim();
-                        // Filter for Arabic only
-                        childFirstName = childFirstName.replace(/[^\u0600-\u06FF\s]/g, '').trim();
-
-                        // If current line is too short, check next line
-                        if (childFirstName.split(' ').length < 1 && i + 1 < cleanLines.length) {
-                            childFirstName = cleanLines[i + 1].replace(/[^\u0600-\u06FF\s]/g, '').trim();
-                        }
-                    }
-
-                    // Look for Father's Name (اسم الأب)
-                    if (line.includes('اسم الأب') || line.includes('الأب')) {
-                        fatherName = line.replace(/.*(اسم الأب|الأب)[:\/\- ]+/, '').trim();
-                        fatherName = fatherName.replace(/[^\u0600-\u06FF\s]/g, '').trim();
-
-                        if (fatherName.split(' ').length < 2 && i + 1 < cleanLines.length) {
-                            fatherName = cleanLines[i + 1].replace(/[^\u0600-\u06FF\s]/g, '').trim();
-                        }
-                    }
-                }
-
-                // Fallback for Name if specific labels failed
-                let detectedFullName = "";
-                if (childFirstName && fatherName) {
-                    detectedFullName = (childFirstName + ' ' + fatherName).trim();
-                } else {
-                    // Look for any line that looks like a 4-segment Arabic name
-                    for (const line of cleanLines) {
-                        const words = line.replace(/[^\u0600-\u06FF\s]/g, '').trim().split(/\s+/);
-                        if (words.length >= 4) {
-                            detectedFullName = words.slice(0, 4).join(' ');
-                            break;
-                        }
-                    }
-                }
-
-                let feedback = "";
-                if (foundID) {
-                    nationalIDInput.value = foundID;
-                    nationalIDInput.dispatchEvent(new Event('input'));
-                    feedback += `<div style="color: #2e7d32; font-weight: bold;"><i class="fas fa-check-circle"></i> تم التقاط الرقم القومي بنجاح</div>`;
-                }
-
-                if (detectedFullName) {
-                    studentNameInput.value = detectedFullName;
-                    feedback += `<div style="color: #2e7d32; font-weight: bold;"><i class="fas fa-check-circle"></i> تم التقاط الاسم: ${detectedFullName}</div>`;
-                }
-
-                if (!foundID || !detectedFullName) {
-                    feedback = `<div style="color: #d32f2f; background: rgba(211, 47, 47, 0.05); padding: 10px; border-radius: 8px; font-size: 0.9rem;">
-                                    <i class="fas fa-exclamation-triangle"></i> حدث خطأ في القراءة التلقائية.<br>
-                                    يرجى التأكد من أن الصورة واضحة تماماً ولا يوجد بها اهتزاز، ثم حاول مرة أخرى.
-                                </div>`;
-                } else {
-                    feedback += '<div style="font-size: 0.8rem; color: #666; margin-top: 5px;">* برجاء التأكد من صحة البيانات المستخرجة.</div>';
-                }
-
-                ocrStatus.innerHTML = feedback;
-
-            } catch (err) {
-                console.error("OCR Error:", err);
-                ocrStatus.innerHTML = '<div style="color: #d32f2f;"><i class="fas fa-times-circle"></i> تعذر معالجة الصورة. يرجى المحاولة بصورة أكثر وضوحاً.</div>';
-            }
-        });
-    }
-
-    /**
-     * Preprocesses the image to improve OCR results
-     */
-    async function preprocessImage(file) {
-        return new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const img = new Image();
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-
-                    // Limit size for performance but keep enough detail
-                    const maxDim = 1500;
-                    let width = img.width;
-                    let height = img.height;
-
-                    if (width > maxDim || height > maxDim) {
-                        if (width > height) {
-                            height = (height / width) * maxDim;
-                            width = maxDim;
-                        } else {
-                            width = (width / height) * maxDim;
-                            height = maxDim;
-                        }
-                    }
-
-                    canvas.width = width;
-                    canvas.height = height;
-
-                    // Draw to canvas
-                    ctx.drawImage(img, 0, 0, width, height);
-
-                    // 1. Grayscale & Contrast
-                    const imageData = ctx.getImageData(0, 0, width, height);
-                    const data = imageData.data;
-
-                    for (let i = 0; i < data.length; i += 4) {
-                        // Standard Grayscale
-                        const grayscale = data[i] * 0.3 + data[i + 1] * 0.59 + data[i + 2] * 0.11;
-
-                        // Increase Contrast (thresholding)
-                        let val = grayscale;
-                        if (val > 180) val = 255;
-                        else if (val < 100) val = 0;
-
-                        data[i] = data[i + 1] = data[i + 2] = val;
-                    }
-
-                    ctx.putImageData(imageData, 0, 0);
-                    resolve(canvas.toDataURL('image/jpeg', 0.9));
-                };
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
-        });
-    }
-
-    // --- Real-time Age Calculation & Display ---
-    const ageDisplay = document.getElementById('ageDisplay');
-    const ageText = document.getElementById('ageText');
-    if (nationalIDInput && ageDisplay && ageText) {
-        nationalIDInput.addEventListener('input', () => {
-            const idValue = nationalIDInput.value.trim();
-            if (idValue.length === 14) {
-                const ageInfo = calculateAgeFromID(idValue);
-                if (ageInfo) {
-                    ageDisplay.style.display = 'block';
-                    ageText.textContent = `العمر: ${ageInfo.formattedAge}`;
-                    if (ageInfo.years > 15) {
-                        ageText.style.color = '#d32f2f';
-                        ageText.innerHTML += ' <br> ⚠️ عذراً، السن تجاوز 15 عاماً (مخالف للشروط)';
-                    } else {
-                        ageText.style.color = '#2e7d32';
-                    }
-                } else {
-                    ageDisplay.style.display = 'none';
-                }
-            } else {
-                ageDisplay.style.display = 'none';
             }
         });
     }

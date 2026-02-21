@@ -589,42 +589,26 @@
                                 <label for="nationalID"><i class="fas fa-id-card"></i> الرقم القومي (من اليسار)</label>
                                 <div class="input-with-action">
                                     <input type="text" id="nationalID" name="nationalID"
-                                        placeholder="تعبئة تلقائية أو يدوية" minlength="14" maxlength="14"
+                                        placeholder="أدخل الرقم القومي 14 رقم" minlength="14" maxlength="14"
                                         pattern="[0-9]{14}" title="يرجى إدخال 14 رقم" required
                                         style="direction: ltr; text-align: left;">
-                                    <button type="button" id="scanIDBtn" class="action-btn"
-                                        title="سحب البيانات من شهادة الميلاد">
-                                        <i class="fas fa-magic"></i>
-                                    </button>
-                                </div>
-                                <div id="ocrStatus" class="ocr-status" style="display: none;"></div>
-                                <div id="ageDisplay" class="age-display"
-                                    style="display: none; margin-top: 10px; font-size: 0.95rem; color: #555;">
-                                    <i class="fas fa-birthday-cake"></i> <span id="ageText"></span>
                                 </div>
                             </div>
 
                             <div class="input-group">
-                                <label for="idFile"><i class="fas fa-file-image"></i> صورة شهادة الميلاد (مطلوب)</label>
-                                <div class="custom-file-upload">
-                                    <input type="file" id="idFile" name="idFile" accept="image/*" required>
-                                    <label for="idFile" class="file-label">
-                                        <i class="fas fa-upload"></i>
-                                        <span class="file-text">اختر صورة شهادة الميلاد</span>
-                                    </label>
-                                </div>
+                                <label for="birthCertLink"><i class="fab fa-google-drive"></i> رابط شهادة الميلاد
+                                    (Google Drive)</label>
+                                <input type="url" id="birthCertLink" name="birthCertLink"
+                                    placeholder="أدخل رابط جوجل درايف لشهادة الميلاد" required>
+                                <p style="font-size: 0.8rem; color: #888; margin-top: 5px;">* يرجى رفع الصورة على Google
+                                    Drive ووضع الرابط هنا مع التأكد من أن الرابط "عام" (Anyone with the link).</p>
                             </div>
 
                             <div class="input-group">
-                                <label for="personalPhoto"><i class="fas fa-user-circle"></i> الصورة الشخصية
+                                <label for="personalPhotoLink"><i class="fab fa-google-drive"></i> رابط الصورة الشخصية
                                     (اختياري)</label>
-                                <div class="custom-file-upload">
-                                    <input type="file" id="personalPhoto" name="personalPhoto" accept="image/*">
-                                    <label for="personalPhoto" class="file-label">
-                                        <i class="fas fa-upload"></i>
-                                        <span class="file-text">اختر الصورة الشخصية</span>
-                                    </label>
-                                </div>
+                                <input type="url" id="personalPhotoLink" name="personalPhotoLink"
+                                    placeholder="أدخل رابط جوجل درايف للصورة الشخصية">
                             </div>
 
                             <div class="input-group">
@@ -822,7 +806,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
     <!-- Lightbox Modal -->
     <div id="lightbox" class="lightbox">
