@@ -77,11 +77,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const target = document.querySelector(href);
             if (target) {
-                const offsetTop = target.getBoundingClientRect().top + window.pageYOffset; // Removed -80 offset
+                const offsetTop = target.getBoundingClientRect().top + window.pageYOffset;
                 window.scrollTo({
                     top: offsetTop,
                     behavior: 'smooth'
                 });
+
+                // Force AOS refresh after a short delay to account for smooth scroll
+                setTimeout(() => {
+                    AOS.refresh();
+                }, 800);
             }
         });
     });
@@ -178,6 +183,32 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }, { threshold: 0.5 });
         observer.observe(statsSection);
+    }
+
+    // --- Past Winners History & Restriction Logic ---
+    const PAST_YEAR_WINNERS = {
+        1: ["أحمد السيد مصطفى قنديل", "السيد سعد مصطفى كلبوش", "أبرار يحيى فتحي عطية", "أحمد عبدالله إسماعيل النجار", "ملك محمد أحمد العدوي", "رمضان أشرف محمد الطريني", "بسملة خالد كشكة", "محمد علي أحمد السيد علي", "منة إبراهيم محمد مخيمر", "فاطمة محمد أحمد غبيش"],
+        2: ["آلاء محمد عبدالنبي دويدار", "فاطمة محمد محمد البرهامي", "مالك مصطفى السيد فوز الله", "بسملة طه عبدالعزيز علي", "منار عبدالحميد رمضان البرهامي", "ياسمين حسين مصطفى صحصاح", "زياد محمد عادل ابراهيم", "هاجر عبدالرازق الغفلول", "محمد السيد محمد خفاجي", "جنى السيد علي الطريني"],
+        3: ["مازن مصطفى السيد فوز الله", "سلمى إبراهيم بسيوني خلف", "يوسف طه يوسف ياسين", "أنس عيسى محمد دويدار", "تقى عبدالرازق بسيوني خلف", "عمر إكرامي السيد عفيفي", "محمد حلمي جمال سالم", "أحمد عبدالرازق الطريني", "زياد يوسف عبداللطيف", "يوسف هيثم السيد العفيفي", "رنا صابر عبدالمحسن زليطة", "محمد محمود سليمان", "صلاح حمادة صلاح أبو الخير", "عدي أشرف نجيب الغفلول", "أحمد مصطفى حسن الفضالي", "ياسمين عبدالرازق بسيوني خلف", "محمد أحمد محمد الدميري", "ريم مخيمر السعودي", "محمد يحيى عطية", "عبدالحليم صابر ابوشعيشع النجار"],
+        4: ["مالك فتحي حسن النجار", "ماريا إكرامي السيد العفيفي", "كريم هيثم عبدالعزيز خلفة", "جنى حسني يوسف ليلة", "جنى محمود إبراهيم شلبي", "محمد عبدالحميد العدوي", "رنا درغام محمد زليطة", "عبدالمنعم وائل الجوهري", "أنس فتحي طه الحشاش", "أسيل فتحي فؤاد البهبيتي", "زياد غازي أحمد الطريني", "كريم أحمد فؤاد البهبيتي", "جنى صابر محمد عبدالحليم", "عائشة طاهر اسماعيل الشيخ", "عمر أحمد مصطفى زردق", "رمضان إبراهيم رمضان زليطة", "أيسل فتحي سيدأحمد خفاجي", "معاذ عماد حمدي عبدالله", "مصطفى بسيوني الزرزور", "بسملة محمد علي عابدين", "روفان بلال الفخراني", "آدم عيسى عبدالرازق العدوي", "عبدالرحمن سامح الحسني", "حنان فرج عبدالخالق الغفلول", "رهف حمادة طه سليم", "منى رجب عبدالستار علي", "محمد سيدأحمد عبدالفتاح زايد", "روقية رمزي عطية الفيشاوي", "أنس محمد فتوح زليطة", "عبدالعزيز عبدالله خلفة", "رودينا محمد سيدأحمد أبوالسعود", "حسن سامح حسن الغفلول"]
+    };
+
+    const LEVEL_HIERARCHY = {
+        'المستوى الأول (القرآن كاملاً)': 1,
+        'المستوى الثاني (ثلاثة أرباع القرآن)': 2,
+        'المستوى الثالث (نصف القرآن)': 3,
+        'المستوى الرابع (ربع القرآن)': 4,
+        'المستوى الخامس (البراعم - 5 أجزاء)': 5
+    };
+
+    function normalizeArabicName(name) {
+        if (!name) return "";
+        return name.trim()
+            .replace(/\s+/g, ' ')
+            .replace(/[أإآ]/g, 'ا')
+            .replace(/ة/g, 'ه')
+            .replace(/[ى]/g, 'ي')
+            .replace(/[ـ]/g, ''); // إزالة التطويل
     }
 
     // --- Firebase Configuration ---
@@ -325,6 +356,21 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('seatNumberModal').style.display = 'flex';
     };
 
+    window.showBlockedModal = (message) => {
+        const modal = document.getElementById('blockedModal');
+        const msgEl = document.getElementById('blockedModalMessage');
+        if (modal && msgEl) {
+            msgEl.textContent = message;
+            modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+    };
+
+    window.closeBlockedModal = () => {
+        document.getElementById('blockedModal').style.display = 'none';
+        document.body.style.overflow = 'auto';
+    };
+
     // Registration Form logic
     const registrationForm = document.getElementById('registrationForm');
     if (registrationForm) {
@@ -424,9 +470,53 @@ document.addEventListener('DOMContentLoaded', () => {
                         .get();
 
                     if (!blockCheckName.empty || !blockCheckID.empty) {
-                        alert('⚠️ عذراً، لا يمكن قبول هذا الطلب. يرجى مراجعة إدارة المسابقة إذا كنت تعتقد أن هناك خطأ.');
+                        showBlockedModal('⚠️ عذراً، لا يمكن قبول هذا الطلب. يرجى مراجعة إدارة المسابقة إذا كنت تعتقد أن هناك خطأ.');
                         resetSubmitBtn();
                         return;
+                    }
+
+                    // --- 2.1. Past Winners Logic (Hierarchy Check) ---
+                    if (btnText) btnText.innerHTML = '<i class="fas fa-shield-alt"></i> جاري فحص سجل المشاركات السابقة...';
+
+                    const normalizedInputName = normalizeArabicName(studentName);
+                    const selectedLevel = formData.get('level');
+                    const currentLevelRank = LEVEL_HIERARCHY[selectedLevel];
+
+                    let pastLevelRank = null;
+                    for (let rank in PAST_YEAR_WINNERS) {
+                        const winnerFound = PAST_YEAR_WINNERS[rank].some(w => normalizeArabicName(w) === normalizedInputName);
+                        if (winnerFound) {
+                            pastLevelRank = parseInt(rank);
+                            break;
+                        }
+                    }
+
+                    if (pastLevelRank !== null) {
+                        let isBlocked = false;
+                        let blockedReason = "";
+
+                        if (pastLevelRank === 1) {
+                            isBlocked = true;
+                            blockedReason = "بما أنك كنت من أوائل حَفَظة القرآن كاملاً العام الماضي، فإنه لا يسمح لك بالمشاركة هذا العام لإعطاء الفرصة لمتسابقين جدد. نفع الله بك وبقرآنك.";
+                        } else if (currentLevelRank >= pastLevelRank) {
+                            isBlocked = true;
+                            blockedReason = "لقد كنت من أوائل هذا المستوى في العام الماضي، يرجى اختيار مستوى آخر (أكبر) للتنافس فيه هذا العام لتطوير مهاراتك.";
+                        }
+
+                        if (isBlocked) {
+                            // Register attempt as blocked for admin reference
+                            await db.collection('blockedStudents').add({
+                                studentName,
+                                nationalID,
+                                level: selectedLevel,
+                                reason: `مخالفة قواعد الترقيع: (مستوى سابق: ${pastLevelRank}, مستوى حالي: ${currentLevelRank})`,
+                                blockedAt: firebase.firestore.FieldValue.serverTimestamp()
+                            });
+
+                            showBlockedModal(blockedReason);
+                            resetSubmitBtn();
+                            return;
+                        }
                     }
 
                     // --- 3. Duplicate Check in active registrations ---
@@ -436,7 +526,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         .get();
 
                     if (!idCheck.empty) {
-                        alert('⚠️ عذراً، هذا الرقم القومي مسجل مسبقاً في المسابقة.');
+                        showBlockedModal('⚠️ عذراً، هذا الرقم القومي مسجل مسبقاً في المسابقة.');
                         resetSubmitBtn();
                         return;
                     }
@@ -447,15 +537,22 @@ document.addEventListener('DOMContentLoaded', () => {
                         .get();
 
                     if (!nameCheck.empty) {
-                        alert('⚠️ عذراً، هذا الاسم مسجل مسبقاً.');
+                        showBlockedModal('⚠️ عذراً، هذا الاسم مسجل مسبقاً.');
                         resetSubmitBtn();
                         return;
                     }
                 }
 
                 // --- 4. Prepare Data ---
-                const birthCertLink = formData.get('birthCertLink') || '';
-                const personalPhotoLink = formData.get('personalPhotoLink') || '';
+                const birthCertLink = formData.get('birthCertLink')?.trim() || '';
+                const personalPhotoLink = formData.get('personalPhotoLink')?.trim() || '';
+
+                // Validation: Ensure links are unique if both are provided
+                if (birthCertLink !== "" && personalPhotoLink !== "" && birthCertLink === personalPhotoLink) {
+                    alert("⚠️ لا يمكن استخدام نفس الرابط لشهادة الميلاد والصورة الشخصية. يرجى التأكد من وضع الرابط الصحيح لكل خانة.");
+                    resetSubmitBtn();
+                    return;
+                }
 
                 const registrationData = {
                     studentName,
@@ -488,7 +585,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             blockedAt: firebase.firestore.FieldValue.serverTimestamp()
                         });
                     }
-                    alert(`⚠️ عذراً، تبيّن أن سن المتسابق (${ageInfo.years} سنة) يتجاوز الحد المسموح به للمشاركة في المسابقة (15 سنة). تم تسجيل المحاولة ولن يتم حجز رقم جلوس.`);
+                    showBlockedModal(`⚠️ عذراً، تبيّن أن سن المتسابق (${ageInfo.years} سنة) يتجاوز الحد المسموح به للمشاركة في المسابقة (15 سنة). تم تسجيل المحاولة ولن يتم حجز رقم جلوس.`);
                     resetSubmitBtn();
                     return;
                 }
@@ -541,6 +638,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     document.getElementById('displaySeatNumber').textContent = seatNumber.assignedSeat;
                     const committeeDisplay = document.getElementById('displayCommittee');
                     if (committeeDisplay) committeeDisplay.textContent = seatNumber.committeeNumber;
+
+                    // Update Requirement Modal Visibility
+                    const photoReq = document.getElementById('photoRequirement');
+                    const birthReq = document.getElementById('birthCertRequirement');
+
+                    if (photoReq) photoReq.style.display = personalPhotoLink ? 'none' : 'flex';
+                    if (birthReq) birthReq.style.display = birthCertLink ? 'none' : 'flex';
 
                     document.getElementById('confirmationModal').style.display = 'flex';
                 }

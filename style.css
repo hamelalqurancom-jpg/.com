@@ -23,6 +23,7 @@
 
 html {
     scroll-behavior: smooth;
+    overflow-x: hidden;
 }
 
 body {
@@ -80,9 +81,9 @@ h3 {
 
 @media (max-width: 768px) {
     .hero {
-        background-size: 100% 100%;
-        /* Fill screen dimensions on mobile as requested */
-        padding-bottom: 12vh;
+        background-size: cover;
+        /* Remove gaps and fill screen */
+        padding-bottom: 5vh;
     }
 }
 
@@ -114,87 +115,55 @@ h3 {
     z-index: 100;
     width: 100%;
     position: absolute;
-    bottom: 8%;
-    /* Adjust to match the position of text in the flyer */
+    bottom: 32%;
+    /* Raised by another 2cm (total 32%) */
     padding: 0 20px;
 }
 
-.hero-btns .btn {
-    /* Use transparent hotspots without any visual styling */
+.hero-btns .btn-primary {
     background: transparent !important;
+    color: transparent !important;
     border: none !important;
     box-shadow: none !important;
-    color: transparent !important;
-    cursor: pointer;
-    width: 160px;
-    height: 60px;
-    display: block;
-    border-radius: 10px;
-    transition: none;
-    /* Avoid any visual hints */
+    width: 280px !important;
+    height: 80px !important;
+    display: block !important;
+    text-decoration: none !important;
+    cursor: pointer !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    animation: none !important;
+    transition: none !important;
 }
 
-@media (max-width: 768px) {
-    .hero-btns {
-        flex-direction: column;
-        align-items: center;
-        bottom: 12%;
-        /* Higher up for mobile layout */
-        gap: 10px;
-    }
-
-    .hero-btns .btn {
-        width: 80%;
-        height: 50px;
-    }
-}
-
-.hero-btns .btn-primary {
-    background: linear-gradient(45deg, var(--dark-gold), var(--primary-gold));
-    border: none;
-    box-shadow: 0 10px 30px rgba(212, 175, 55, 0.4);
-}
-
-.hero-btns .btn-secondary {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(212, 175, 55, 0.5);
-    color: var(--primary-gold) !important;
-}
-
-.hero-btns .btn:hover {
-    transform: translateY(-5px) scale(1.05);
-    box-shadow: 0 15px 40px rgba(212, 175, 55, 0.6);
+.hero-btns .btn-primary:hover {
+    transform: none !important;
+    box-shadow: none !important;
 }
 
 @media (max-width: 768px) {
     .hero {
-        background-size: contain;
+        background-size: cover;
+        background-position: center;
         align-items: flex-end;
-        padding-bottom: 8vh;
+        padding-bottom: 5vh;
     }
 
     .hero-btns {
         flex-direction: column;
-        width: 100%;
-        padding: 0 20px;
-        gap: 15px;
+        align-items: center;
+        bottom: 32%;
+        /* Adjusted to 32% to match desktop */
     }
 
-    .hero-btns .btn {
-        width: 100%;
-    }
-
-    /* On mobile, if these are overlays, we keep them transparent but functional */
-    /* This depends on the user's specific flyer design. 
-       If they want them VISIBLE, we keep the above. 
-       If they want them TRANSPARENT OVERLAYS, we use the following: */
-
-    .hero-btns.overlay-mode .btn {
-        background: transparent !important;
-        border: none !important;
-        box-shadow: none !important;
-        color: transparent !important;
+    .hero-btns .btn-primary {
+        width: 220px !important;
+        height: 70px !important;
+        padding: 15px 40px !important;
+        font-size: 1.15rem !important;
+        width: 85% !important;
+        max-width: 320px;
+        min-height: auto !important;
     }
 }
 
@@ -803,7 +772,8 @@ h3 {
     padding: 25px;
     border-radius: 20px;
     border: 1px solid var(--glass-border);
-    width: 320px;
+    width: 100%;
+    max-width: 320px;
     min-height: 300px;
     height: auto;
     transition: var(--transition-slow);
@@ -1623,21 +1593,43 @@ h3 {
 
 @media (max-width: 768px) {
     .apply-card {
-        padding: 30px 20px;
+        padding: 30px 15px;
     }
 
     .apply-form .form-grid {
-        grid-template-columns: 1fr;
-        gap: 15px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
     }
 
+    .input-group,
     .input-group.full-width {
-        grid-column: span 1;
+        width: 100% !important;
+        grid-column: auto !important;
+    }
+
+    .input-group label {
+        font-size: 0.95rem;
+        margin-bottom: 8px;
+    }
+
+    .input-group input,
+    .input-group select {
+        padding: 12px 15px !important;
+        font-size: 0.95rem !important;
+        height: 50px !important;
     }
 
     .submit-btn {
+        width: 100% !important;
         font-size: 1.2rem;
-        padding: 15px;
+        padding: 18px;
+        border-radius: 12px;
+    }
+
+    .levels-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
     }
 }
 

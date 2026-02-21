@@ -517,7 +517,7 @@
     <!-- Registration Section -->
     <section id="apply" class="apply-section">
         <div class="container">
-            <div class="section-header" data-aos="fade-up">
+            <div class="section-header">
                 <span class="upper-title">انضم إلينا الآن</span>
                 <h2>استمارة تقديم متسابق</h2>
                 <div class="decorative-line"></div>
@@ -595,25 +595,6 @@
                                         style="direction: ltr; text-align: left;">
                                 </div>
                             </div>
-
-                            <div class="input-group">
-                                <label for="birthCertLink"><i class="fab fa-google-drive"></i> رابط شهادة الميلاد
-                                    (اختياري)</label>
-                                <input type="url" id="birthCertLink" name="birthCertLink"
-                                    placeholder="أدخل رابط جوجل درايف لشهادة الميلاد">
-                            </div>
-                            <div class="input-group">
-                                <label for="personalPhotoLink"><i class="fab fa-google-drive"></i> رابط الصورة الشخصية
-                                    (اختياري)</label>
-                                <input type="url" id="personalPhotoLink" name="personalPhotoLink"
-                                    placeholder="أدخل رابط جوجل درايف للصورة الشخصية">
-                            </div>
-
-                            <p
-                                style="grid-column: span 2; font-size: 0.85rem; color: #d4af37; margin-top: -5px; margin-bottom: 10px; line-height: 1.4;">
-                                * ملاحظة: في حال تعذر توفير روابط الصور أعلاه، يرجى إحضار أصل شهادة الميلاد والصورة
-                                الشخصية معك في يوم الاختبار.
-                            </p>
 
                             <div class="input-group">
                                 <label for="gender"><i class="fas fa-venus-mars"></i> النوع</label>
@@ -718,6 +699,29 @@
                                     style="width: 20px; height: 20px; cursor: pointer;">
                                 <span>أوافق على كافة الشروط والملاحظات المذكورة أعلاه وأتعهد بصحة البيانات</span>
                             </label>
+                        </div>
+
+                        <!-- Links Section (End of form) -->
+                        <div class="form-grid"
+                            style="margin-top: 30px; border-top: 1px dashed #eee; padding-top: 30px;">
+                            <div class="input-group">
+                                <label for="birthCertLink"><i class="fab fa-google-drive"></i> رابط شهادة الميلاد
+                                    (اختياري)</label>
+                                <input type="url" id="birthCertLink" name="birthCertLink"
+                                    placeholder="أدخل رابط جوجل درايف لشهادة الميلاد">
+                            </div>
+                            <div class="input-group">
+                                <label for="personalPhotoLink"><i class="fab fa-google-drive"></i> رابط الصورة الشخصية
+                                    (اختياري)</label>
+                                <input type="url" id="personalPhotoLink" name="personalPhotoLink"
+                                    placeholder="أدخل رابط جوجل درايف للصورة الشخصية">
+                            </div>
+
+                            <p
+                                style="grid-column: span 1; font-size: 0.85rem; color: #d4af37; margin-top: -5px; line-height: 1.4;">
+                                * ملاحظة: في حال تعذر توفير روابط الصور أعلاه، يرجى إحضار أصل شهادة الميلاد والصورة
+                                الشخصية معك في يوم الاختبار.
+                            </p>
                         </div>
                 </div>
 
@@ -834,11 +838,13 @@
                         <i class="fas fa-money-bill-wave" style="color: #d4af37;"></i>
                         <span>دفع رسم الاشتراك وقدره <strong>20 جنيهاً</strong>.</span>
                     </li>
-                    <li style="margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                    <li id="photoRequirement"
+                        style="margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
                         <i class="fas fa-image" style="color: #d4af37;"></i>
                         <span>إحضار <strong>صورة شخصية</strong> حديثة للمتسابق.</span>
                     </li>
-                    <li style="margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                    <li id="birthCertRequirement"
+                        style="margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
                         <i class="fas fa-file-invoice" style="color: #d4af37;"></i>
                         <span>إحضار <strong>شهادة ميلاد</strong> حديثة (كمبيوتر).</span>
                     </li>
@@ -879,6 +885,27 @@
                 </p>
             </div>
             <button onclick="closeSeatModal()" class="btn btn-primary">حسناً، فهمت</button>
+        </div>
+    </div>
+
+    <!-- Rejection/Blocked Modal -->
+    <div id="blockedModal" class="seat-modal">
+        <div class="seat-modal-content" data-aos="zoom-in"
+            style="border-color: #ff4d4d; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 30px rgba(255, 77, 77, 0.2);">
+            <div class="seat-modal-header">
+                <i class="fas fa-user-shield"
+                    style="color: #ff4d4d; font-size: 4rem; margin-bottom: 20px; display: block;"></i>
+                <h2 style="color: #ff4d4d; font-size: 2rem; margin-bottom: 15px;">عذراً، لا يمكن قبول الطلب</h2>
+            </div>
+            <div class="seat-info-body" style="padding: 20px 0;">
+                <p id="blockedModalMessage" style="font-size: 1.3rem; line-height: 1.8; color: #fff; font-weight: 600;">
+                </p>
+            </div>
+            <div style="margin-top: 20px;">
+                <button onclick="closeBlockedModal()" class="btn btn-secondary"
+                    style="background: rgba(255, 77, 77, 0.1); color: #ff4d4d; border: 1px solid #ff4d4d; padding: 12px 35px; border-radius: 12px; font-weight: bold; cursor: pointer;">حسناً،
+                    فهمت</button>
+            </div>
         </div>
     </div>
 
