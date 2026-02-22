@@ -705,22 +705,28 @@
                         <div class="form-grid"
                             style="margin-top: 30px; border-top: 1px dashed #eee; padding-top: 30px;">
                             <div class="input-group">
-                                <label for="birthCertLink"><i class="fab fa-google-drive"></i> رابط شهادة الميلاد
+                                <label for="birthCertFile"><i class="fas fa-file-upload"></i> رفع شهادة الميلاد
                                     (اختياري)</label>
-                                <input type="url" id="birthCertLink" name="birthCertLink"
-                                    placeholder="أدخل رابط جوجل درايف لشهادة الميلاد">
+                                <div class="custom-file-upload">
+                                    <input type="file" id="birthCertFile" name="birthCertFile" accept="image/*">
+                                    <span class="file-text" id="birthCertText"><i class="fas fa-cloud-upload-alt"></i>
+                                        اختر صورة شهادة الميلاد</span>
+                                </div>
                             </div>
                             <div class="input-group">
-                                <label for="personalPhotoLink"><i class="fab fa-google-drive"></i> رابط الصورة الشخصية
+                                <label for="personalPhotoFile"><i class="fas fa-user-circle"></i> رفع الصورة الشخصية
                                     (اختياري)</label>
-                                <input type="url" id="personalPhotoLink" name="personalPhotoLink"
-                                    placeholder="أدخل رابط جوجل درايف للصورة الشخصية">
+                                <div class="custom-file-upload">
+                                    <input type="file" id="personalPhotoFile" name="personalPhotoFile" accept="image/*">
+                                    <span class="file-text" id="photoText"><i class="fas fa-image"></i> اختر الصورة
+                                        الشخصية</span>
+                                </div>
                             </div>
 
                             <p
                                 style="grid-column: span 1; font-size: 0.85rem; color: #d4af37; margin-top: -5px; line-height: 1.4;">
-                                * ملاحظة: في حال تعذر توفير روابط الصور أعلاه، يرجى إحضار أصل شهادة الميلاد والصورة
-                                الشخصية معك في يوم الاختبار.
+                                * ملاحظة: سيتم رفع الصور مباشرة وبشكل آمن، يرجى الانتظار حتى اكتمال الرفع عند الضغط على
+                                إرسال.
                             </p>
                         </div>
                 </div>

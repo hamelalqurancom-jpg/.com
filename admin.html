@@ -755,28 +755,30 @@
 
             const content = document.getElementById('studentDetailsContent');
 
-            // روابط الجوجل درايف
             const birthCertUrl = data.birthCertPath || null;
             const personalPhotoUrl = data.personalPhotoPath || null;
 
-
-
             const birthCertBtn = birthCertUrl ? `
-                <div style="display:flex; flex-direction:column; gap:5px; width:100%;">
-                    <a href="${birthCertUrl}" target="_blank" class="btn btn-primary" style="padding: 10px; font-size: 0.8rem; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 5px;">
-                        <i class="fab fa-google-drive"></i> عرض شهادة الميلاد
+                <div style="display:flex; flex-direction:column; gap:8px; width:100%;">
+                    <div style="cursor:pointer; border:1px solid #333; border-radius:10px; overflow:hidden;" onclick="showImgPreview('${birthCertUrl}')">
+                        <img src="${birthCertUrl}" style="width:100%; height:80px; object-fit:cover; opacity: 0.8; transition: 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.8">
+                    </div>
+                    <a href="${birthCertUrl}" target="_blank" class="btn btn-primary" style="padding: 8px; font-size: 0.75rem; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 5px;">
+                        <i class="fas fa-external-link-alt"></i> فتح الشهادة
                     </a>
-                </div>` : '<span style="color:#666">لا يوجد رابط شهادة</span>';
+                </div>` : '<span style="color:#666">❌ لم يتم الرفع</span>';
 
             const photoBtn = personalPhotoUrl ? `
-                <div style="display:flex; flex-direction:column; gap:5px; width:100%;">
-                    <a href="${personalPhotoUrl}" target="_blank" class="btn btn-secondary" style="padding: 10px; font-size: 0.8rem; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 5px;">
-                        <i class="fab fa-google-drive"></i> عرض الصورة الشخصية
+                <div style="display:flex; flex-direction:column; gap:8px; width:100%;">
+                    <div style="cursor:pointer; border:1px solid #333; border-radius:10px; overflow:hidden;" onclick="showImgPreview('${personalPhotoUrl}')">
+                        <img src="${personalPhotoUrl}" style="width:100%; height:80px; object-fit:cover; opacity: 0.8; transition: 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.8">
+                    </div>
+                    <a href="${personalPhotoUrl}" target="_blank" class="btn btn-secondary" style="padding: 8px; font-size: 0.75rem; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 5px;">
+                        <i class="fas fa-user-circle"></i> فتح الصورة
                     </a>
-                </div>` : '<span style="color:#666">لا يوجد رابط صورة</span>';
+                </div>` : '<span style="color:#666">❌ لم يتم الرفع</span>';
 
             content.innerHTML = `
-
                 <div><strong style="color: #d4af37;">الاسم:</strong><br>${data.studentName}</div>
                 <div><strong style="color: #d4af37;">الرقم القومي:</strong><br>${data.nationalID || '-'}</div>
                 <div><strong style="color: #d4af37;">السن:</strong><br>${data.formattedAge || (data.ageYears ? data.ageYears + ' سنة' : '-')}</div>
@@ -788,8 +790,14 @@
                 <div><strong style="color: #d4af37;">هاتف ولي الأمر:</strong><br>${data.phone2}</div>
                 <div><strong style="color: #d4af37;">هاتف الشيخ:</strong><br>${data.sheikhPhone}</div>
                 <div style="grid-column: span 2;"><strong style="color: #d4af37;">العنوان:</strong><br>${data.address}</div>
-                <div style="border-top: 1px solid #333; padding-top: 10px;">${birthCertBtn}</div>
-                <div style="border-top: 1px solid #333; padding-top: 10px;">${photoBtn}</div>
+                <div style="border-top: 1px solid #333; padding-top: 15px;">
+                    <label style="color:#d4af37; font-size:0.8rem; display:block; margin-bottom:5px;">شهادة الميلاد:</label>
+                    ${birthCertBtn}
+                </div>
+                <div style="border-top: 1px solid #333; padding-top: 15px;">
+                    <label style="color:#d4af37; font-size:0.8rem; display:block; margin-bottom:5px;">الصورة الشخصية:</label>
+                    ${photoBtn}
+                </div>
                 <div style="grid-column: span 2; font-size: 0.8rem; color: #888; border-top: 1px solid #222; margin-top: 10px; padding-top: 10px;">تاريخ التسجيل: ${data.timestamp ? new Date(data.timestamp.seconds * 1000).toLocaleString('ar-EG') : '-'}</div>
             `;
 

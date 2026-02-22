@@ -402,13 +402,47 @@ document.addEventListener('DOMContentLoaded', () => {
                 const textSpan = container ? container.querySelector('.file-text') : null;
                 if (e.target.files.length > 0) {
                     if (container) container.classList.add('has-file');
-                    if (textSpan) textSpan.textContent = 'تم اختيار: ' + e.target.files[0].name;
+                    if (textSpan) {
+                        textSpan.innerHTML = `<i class="fas fa-check-circle" style="color: #28a745;"></i> تم اختيار: ${e.target.files[0].name}`;
+                    }
                 } else {
                     if (container) container.classList.remove('has-file');
-                    if (textSpan) textSpan.textContent = input.id === 'idFile' ? 'اختر صورة شهادة الميلاد' : 'اختر الصورة الشخصية';
+                    if (textSpan) {
+                        textSpan.innerHTML = input.id === 'birthCertFile' ?
+                            '<i class="fas fa-cloud-upload-alt"></i> اختر صورة شهادة الميلاد' :
+                            '<i class="fas fa-image"></i> اختر الصورة الشخصية';
+                    }
                 }
             });
         });
+
+        // --- Cloudinary Upload Function ---
+        async function uploadToCloudinary(file, type) {
+            if (!file) return null;
+            if (btnText) btnText.innerHTML = `<i class="fas fa-spinner fa-spin"></i> جاري رفع ${type}...`;
+
+            const cloudName = 'duvunzwm2';
+            const uploadPreset = 'hamel_preset';
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('upload_preset', uploadPreset);
+
+            try {
+                const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                if (data.secure_url) {
+                    return data.secure_url;
+                } else {
+                    throw new Error('Upload failed');
+                }
+            } catch (error) {
+                console.error('Cloudinary Error:', error);
+                throw new Error(`تعذر رفع ${type}. تأكد من جودة اتصال الإنترنت.`);
+            }
+        }
 
         registrationForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -430,6 +464,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
+            const ageInfo = calculateAgeFromID(nationalID);
+            if (!ageInfo) {
+                alert('يرجى التأكد من صحة الرقم القومي (14 رقم تبدأ بـ 2 أو 3).');
+                return;
+            }
+
             // --- 1. Unique Phone Numbers Validation ---
             const formData = new FormData(registrationForm);
             const p1 = formData.get('phone1')?.trim();
@@ -440,13 +480,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const phoneList = [p1, p2, p3, sp].filter(p => p && p !== "");
             const uniquePhones = new Set(phoneList);
             if (uniquePhones.size !== phoneList.length) {
-                alert("⚠️ يرجى إدخال أرقام هواتف مختلفة. لا يسمح بتكرار نفس الرقم في أكثر من خانة لضمان القدرة على التواصل معك.");
-                return;
-            }
-
-            const ageInfo = calculateAgeFromID(nationalID);
-            if (!ageInfo) {
-                alert('يرجى التأكد من صحة الرقم القومي (14 رقم تبدأ بـ 2 أو 3).');
+                alert("⚠️ يرجى إدخال أرقام هواتف مختلفة. لا يسمح بتكرار نفس الرقم في أكثر من خانة.");
                 return;
             }
 
@@ -457,27 +491,32 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             try {
+                // --- 2. Image Uploads to Cloudinary ---
+                const birthCertFile = document.getElementById('birthCertFile').files[0];
+                const personalPhotoFile = document.getElementById('personalPhotoFile').files[0];
+
+                let birthCertUrl = '';
+                let personalPhotoUrl = '';
+
+                if (birthCertFile) {
+                    birthCertUrl = await uploadToCloudinary(birthCertFile, 'شهادة الميلاد');
+                }
+                if (personalPhotoFile) {
+                    personalPhotoUrl = await uploadToCloudinary(personalPhotoFile, 'الصورة الشخصية');
+                }
+
                 if (isFirebaseConfigured && db) {
-                    // --- 2. Check Block List (Name or National ID) ---
-                    const blockCheckName = await db.collection('blockedStudents')
-                        .where('studentName', '==', studentName)
-                        .limit(1)
-                        .get();
+                    if (btnText) btnText.innerHTML = '<i class="fas fa-shield-alt"></i> جاري فحص سجل السوابق...';
 
-                    const blockCheckID = await db.collection('blockedStudents')
-                        .where('nationalID', '==', nationalID)
-                        .limit(1)
-                        .get();
-
-                    if (!blockCheckName.empty || !blockCheckID.empty) {
-                        showBlockedModal('⚠️ عذراً، لا يمكن قبول هذا الطلب. يرجى مراجعة إدارة المسابقة إذا كنت تعتقد أن هناك خطأ.');
+                    // --- 3. Check Block List ---
+                    const blockCheckID = await db.collection('blockedStudents').where('nationalID', '==', nationalID).limit(1).get();
+                    if (!blockCheckID.empty) {
+                        showBlockedModal('⚠️ عذراً، لا يمكن قبول هذا الطلب. يرجى مراجعة الإدارة.');
                         resetSubmitBtn();
                         return;
                     }
 
-                    // --- 2.1. Past Winners Logic (Hierarchy Check) ---
-                    if (btnText) btnText.innerHTML = '<i class="fas fa-shield-alt"></i> جاري فحص سجل المشاركات السابقة...';
-
+                    // --- 4. Past Winners Check ---
                     const normalizedInputName = normalizeArabicName(studentName);
                     const selectedLevel = formData.get('level');
                     const currentLevelRank = LEVEL_HIERARCHY[selectedLevel];
@@ -492,131 +531,45 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
 
                     if (pastLevelRank !== null) {
-                        let isBlocked = false;
-                        let blockedReason = "";
-
-                        if (pastLevelRank === 1) {
-                            isBlocked = true;
-                            blockedReason = "بما أنك كنت من أوائل حَفَظة القرآن كاملاً العام الماضي، فإنه لا يسمح لك بالمشاركة هذا العام لإعطاء الفرصة لمتسابقين جدد. نفع الله بك وبقرآنك.";
-                        } else if (currentLevelRank >= pastLevelRank) {
-                            isBlocked = true;
-                            blockedReason = "لقد كنت من أوائل هذا المستوى في العام الماضي، يرجى اختيار مستوى آخر (أكبر) للتنافس فيه هذا العام لتطوير مهاراتك.";
-                        }
-
-                        if (isBlocked) {
-                            // Register attempt as blocked for admin reference
-                            await db.collection('blockedStudents').add({
-                                studentName,
-                                nationalID,
-                                level: selectedLevel,
-                                reason: `مخالفة قواعد الترقيع: (مستوى سابق: ${pastLevelRank}, مستوى حالي: ${currentLevelRank})`,
-                                blockedAt: firebase.firestore.FieldValue.serverTimestamp()
-                            });
-
-                            showBlockedModal(blockedReason);
+                        if (pastLevelRank === 1 || currentLevelRank >= pastLevelRank) {
+                            showBlockedModal("عذراً، لا يسمح بالمشاركة في نفس المستوى أو مستوى أقل من مستوى فوزك السابق.");
                             resetSubmitBtn();
                             return;
                         }
                     }
 
-                    // --- 3. Duplicate Check in active registrations ---
-                    const idCheck = await db.collection('registrations')
-                        .where('nationalID', '==', nationalID)
-                        .limit(1)
-                        .get();
-
+                    // --- 5. Duplicate Check ---
+                    const idCheck = await db.collection('registrations').where('nationalID', '==', nationalID).limit(1).get();
                     if (!idCheck.empty) {
-                        showBlockedModal('⚠️ عذراً، هذا الرقم القومي مسجل مسبقاً في المسابقة.');
+                        showBlockedModal('⚠️ عذراً، هذا الرقم القومي مسجل مسبقاً.');
                         resetSubmitBtn();
                         return;
                     }
 
-                    const nameCheck = await db.collection('registrations')
-                        .where('studentName', '==', studentName)
-                        .limit(1)
-                        .get();
-
-                    if (!nameCheck.empty) {
-                        showBlockedModal('⚠️ عذراً، هذا الاسم مسجل مسبقاً.');
-                        resetSubmitBtn();
-                        return;
-                    }
-                }
-
-                // --- 4. Prepare Data ---
-                const birthCertLink = formData.get('birthCertLink')?.trim() || '';
-                const personalPhotoLink = formData.get('personalPhotoLink')?.trim() || '';
-
-                // Validation: Ensure links are unique if both are provided
-                if (birthCertLink !== "" && personalPhotoLink !== "" && birthCertLink === personalPhotoLink) {
-                    alert("⚠️ لا يمكن استخدام نفس الرابط لشهادة الميلاد والصورة الشخصية. يرجى التأكد من وضع الرابط الصحيح لكل خانة.");
-                    resetSubmitBtn();
-                    return;
-                }
-
-                const registrationData = {
-                    studentName,
-                    nationalID,
-                    ageYears: ageInfo.years,
-                    ageMonths: ageInfo.months,
-                    ageDays: ageInfo.days,
-                    birthDate: ageInfo.birthDate,
-                    formattedAge: ageInfo.formattedAge,
-                    gender: formData.get('gender'),
-                    phone1: formData.get('phone1'),
-                    phone2: formData.get('phone2'),
-                    phone3: formData.get('phone3'),
-                    address: formData.get('address'),
-                    sheikhName: formData.get('sheikhName'),
-                    sheikhPhone: formData.get('sheikhPhone'),
-                    level: formData.get('level'),
-                    birthCertPath: birthCertLink, // Now storing the link directly
-                    personalPhotoPath: personalPhotoLink,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                };
-
-                // --- 5. Age Validation (Block if > 15) ---
-                if (ageInfo.years > 15) {
-                    if (isFirebaseConfigured && db) {
-                        // Register as blocked
-                        await db.collection('blockedStudents').add({
-                            ...registrationData,
-                            reason: 'تجاوز السن القانوني (15 عاماً)',
-                            blockedAt: firebase.firestore.FieldValue.serverTimestamp()
-                        });
-                    }
-                    showBlockedModal(`⚠️ عذراً، تبيّن أن سن المتسابق (${ageInfo.years} سنة) يتجاوز الحد المسموح به للمشاركة في المسابقة (15 سنة). تم تسجيل المحاولة ولن يتم حجز رقم جلوس.`);
-                    resetSubmitBtn();
-                    return;
-                }
-
-                if (isFirebaseConfigured && db) {
                     if (btnText) btnText.textContent = 'جاري حجز رقم الجلوس...';
 
-                    const counterRef = db.collection('counters').doc(`${registrationData.gender}_${registrationData.level}`);
+                    const registrationData = {
+                        studentName, nationalID,
+                        ageYears: ageInfo.years, ageMonths: ageInfo.months, ageDays: ageInfo.days,
+                        birthDate: ageInfo.birthDate, formattedAge: ageInfo.formattedAge,
+                        gender: formData.get('gender'),
+                        phone1: formData.get('phone1'), phone2: formData.get('phone2'), phone3: formData.get('phone3'),
+                        address: formData.get('address'),
+                        sheikhName: formData.get('sheikhName'), sheikhPhone: formData.get('sheikhPhone'),
+                        level: formData.get('level'),
+                        birthCertPath: birthCertUrl,
+                        personalPhotoPath: personalPhotoUrl,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    };
 
+                    const counterRef = db.collection('counters').doc(`${registrationData.gender}_${registrationData.level}`);
                     const seatNumber = await db.runTransaction(async (transaction) => {
                         const counterDoc = await transaction.get(counterRef);
-                        let count = 0;
-                        if (counterDoc.exists) {
-                            count = counterDoc.data().count;
-                        }
+                        let count = 0; if (counterDoc.exists) count = counterDoc.data().count;
 
                         const ranges = {
-                            'بنين': {
-                                'المستوى الأول (القرآن كاملاً)': 4000,
-                                'المستوى الثاني (ثلاثة أرباع القرآن)': 4301,
-                                'المستوى الثالث (نصف القرآن)': 4801,
-                                'المستوى الرابع (ربع القرآن)': 5501,
-                                'المستوى الخامس (البراعم - 5 أجزاء)': 1
-                            },
-                            'بنات': {
-                                'المستوى الأول (القرآن كاملاً)': 2000,
-                                'المستوى الثاني (ثلاثة أرباع القرآن)': 2301,
-                                'المستوى الثالث (نصف القرآن)': 2801,
-                                'المستوى الرابع (ربع القرآن)': 3501,
-                                'المستوى الخامس (البراعم - 5 أجزاء)': 1001
-                            }
+                            'بنين': { 'المستوى الأول (القرآن كاملاً)': 4000, 'المستوى الثاني (ثلاثة أرباع القرآن)': 4301, 'المستوى الثالث (نصف القرآن)': 4801, 'المستوى الرابع (ربع القرآن)': 5501, 'المستوى الخامس (البراعم - 5 أجزاء)': 1 },
+                            'بنات': { 'المستوى الأول (القرآن كاملاً)': 2000, 'المستوى الثاني (ثلاثة أرباع القرآن)': 2301, 'المستوى الثالث (نصف القرآن)': 2801, 'المستوى الرابع (ربع القرآن)': 3501, 'المستوى الخامس (البراعم - 5 أجزاء)': 1001 }
                         };
 
                         const start = ranges[registrationData.gender][registrationData.level];
@@ -624,7 +577,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         const committeeNumber = Math.ceil((count + 1) / 20);
 
                         transaction.set(counterRef, { count: count + 1 });
-
                         const newRegRef = db.collection('registrations').doc();
                         registrationData.seatNumber = assignedSeat;
                         registrationData.committee = committeeNumber;
@@ -633,18 +585,16 @@ document.addEventListener('DOMContentLoaded', () => {
                         return { assignedSeat, committeeNumber };
                     });
 
-                    // Success UI update
+                    // Success UI
                     document.getElementById('displayStudentName').textContent = studentName;
                     document.getElementById('displaySeatNumber').textContent = seatNumber.assignedSeat;
                     const committeeDisplay = document.getElementById('displayCommittee');
                     if (committeeDisplay) committeeDisplay.textContent = seatNumber.committeeNumber;
 
-                    // Update Requirement Modal Visibility
                     const photoReq = document.getElementById('photoRequirement');
                     const birthReq = document.getElementById('birthCertRequirement');
-
-                    if (photoReq) photoReq.style.display = personalPhotoLink ? 'none' : 'flex';
-                    if (birthReq) birthReq.style.display = birthCertLink ? 'none' : 'flex';
+                    if (photoReq) photoReq.style.display = personalPhotoUrl ? 'none' : 'flex';
+                    if (birthReq) birthReq.style.display = birthCertUrl ? 'none' : 'flex';
 
                     document.getElementById('confirmationModal').style.display = 'flex';
                 }
@@ -655,7 +605,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             } catch (error) {
                 console.error("Submission Error:", error);
-                alert('حدث خطأ أثناء الإرسال: ' + error.message);
+                alert('حدث خطأ: ' + error.message);
             } finally {
                 resetSubmitBtn();
             }
