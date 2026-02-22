@@ -417,15 +417,18 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // --- Cloudinary Upload Function ---
-        async function uploadToCloudinary(file, type) {
+        async function uploadToCloudinary(file, type, folderName, cloudName, uploadPreset, studentName) {
             if (!file) return null;
             if (btnText) btnText.innerHTML = `<i class="fas fa-spinner fa-spin"></i> جاري رفع ${type}...`;
 
-            const cloudName = 'duvunzwm2';
-            const uploadPreset = 'hamel_preset';
+            // Create a unique public_id based on student name and current time
+            const uniquePublicId = `${studentName.replace(/\s+/g, '_')}_${Date.now()}`;
             const formData = new FormData();
             formData.append('file', file);
             formData.append('upload_preset', uploadPreset);
+            formData.append('folder', folderName);
+            formData.append('public_id', uniquePublicId); // Add public_id
+            formData.append('context', `type=${type}|uploaded_at=${new Date().toISOString()}`);
 
             try {
                 const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
@@ -436,11 +439,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (data.secure_url) {
                     return data.secure_url;
                 } else {
-                    throw new Error('Upload failed');
+                    console.error('Cloudinary Error Data:', data);
+                    throw new Error(data.error?.message || 'Upload failed');
                 }
             } catch (error) {
                 console.error('Cloudinary Error:', error);
-                throw new Error(`تعذر رفع ${type}. تأكد من جودة اتصال الإنترنت.`);
+                throw new Error(`تعذر رفع ${type}. يرجى التحقق من اتصال الإنترنت والمحاولة مرة أخرى.`);
             }
         }
 
@@ -491,19 +495,24 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             try {
-                // --- 2. Image Uploads to Cloudinary ---
+                // --- 2. Image Uploads to Cloudinary (Mandatory Check) ---
                 const birthCertFile = document.getElementById('birthCertFile').files[0];
                 const personalPhotoFile = document.getElementById('personalPhotoFile').files[0];
+
+                if (!birthCertFile || !personalPhotoFile) {
+                    alert("⚠️ يرجى رفع صورة شهادة الميلاد والصورة الشخصية أولاً لإتمام التسجيل.");
+                    resetSubmitBtn();
+                    return;
+                }
 
                 let birthCertUrl = '';
                 let personalPhotoUrl = '';
 
-                if (birthCertFile) {
-                    birthCertUrl = await uploadToCloudinary(birthCertFile, 'شهادة الميلاد');
-                }
-                if (personalPhotoFile) {
-                    personalPhotoUrl = await uploadToCloudinary(personalPhotoFile, 'الصورة الشخصية');
-                }
+                // Account 1 (duvunzwm2) for Birth Certificates
+                birthCertUrl = await uploadToCloudinary(birthCertFile, 'شهادة الميلاد', 'birth_certs', 'duvunzwm2', 'hamel_preset', studentName);
+
+                // Account 2 (dvzqe1zr7) for Personal Photos
+                personalPhotoUrl = await uploadToCloudinary(personalPhotoFile, 'الصورة الشخصية', 'student_photos', 'dvzqe1zr7', 'hamel_preset_2', studentName);
 
                 if (isFirebaseConfigured && db) {
                     if (btnText) btnText.innerHTML = '<i class="fas fa-shield-alt"></i> جاري فحص سجل السوابق...';
@@ -590,11 +599,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     document.getElementById('displaySeatNumber').textContent = seatNumber.assignedSeat;
                     const committeeDisplay = document.getElementById('displayCommittee');
                     if (committeeDisplay) committeeDisplay.textContent = seatNumber.committeeNumber;
-
-                    const photoReq = document.getElementById('photoRequirement');
-                    const birthReq = document.getElementById('birthCertRequirement');
-                    if (photoReq) photoReq.style.display = personalPhotoUrl ? 'none' : 'flex';
-                    if (birthReq) birthReq.style.display = birthCertUrl ? 'none' : 'flex';
 
                     document.getElementById('confirmationModal').style.display = 'flex';
                 }

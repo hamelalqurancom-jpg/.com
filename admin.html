@@ -267,6 +267,9 @@
             <div style="display:flex; gap:10px;">
                 <a href="print.html" target="_blank" class="btn btn-primary"
                     style="padding: 10px 20px; font-size: 0.9rem;"><i class="fas fa-print"></i> طباعة الكشوف</a>
+                <button onclick="exportBackupData()" class="btn btn-primary" style="background: #28a745; border: none;">
+                    <i class="fas fa-download"></i> تصدير (data.js)
+                </button>
                 <button onclick="logout()" class="btn btn-secondary">تسجيل خروج</button>
             </div>
         </header>
@@ -393,15 +396,22 @@
         </div>
 
         <!-- Details Modal -->
-        <div id="detailsModal" class="img-preview-modal" style="display: none;">
+        <div id="detailsModal" class="img-preview-modal" style="display: none; padding: 10px;">
             <div class="login-card"
-                style="max-width: 600px; text-align: right; position: relative; background: #111; border: 2px solid #d4af37; padding: 30px;">
+                style="max-width: 600px; width: 95%; text-align: right; position: relative; background: #111; border: 2px solid #d4af37; padding: 25px; max-height: 95vh; overflow-y: auto; border-radius: 20px; box-shadow: 0 0 30px rgba(0,0,0,0.5);">
+                <!-- Improved Close Button (X) -->
                 <span onclick="closeDetailsModal()"
-                    style="position: absolute; top: 15px; left: 15px; cursor: pointer; color: #d4af37; font-size: 1.5rem;">&times;</span>
+                    style="position: absolute; top: 15px; left: 15px; cursor: pointer; color: #fff; background: rgba(255,255,255,0.1); width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 1.2rem; z-index: 100; transition: 0.3s;"
+                    onmouseover="this.style.background='#ff4d4d'"
+                    onmouseout="this.style.background='rgba(255,255,255,0.1)'">
+                    &times;
+                </span>
+
                 <h2
-                    style="margin-bottom: 25px; border-bottom: 1px solid #d4af37; padding-bottom: 10px; color: #d4af37; font-size: 1.5rem;">
+                    style="margin-bottom: 25px; border-bottom: 1px solid #d4af37; padding-bottom: 10px; color: #d4af37; font-size: 1.4rem;">
                     <i class="fas fa-info-circle"></i> تفاصيل المتسابق
                 </h2>
+
                 <div id="studentDetailsContent"
                     style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 0.95rem; color: #fff;">
                     <!-- Details will be injected here -->
@@ -430,19 +440,34 @@
 
         <div id="nominationsSection" style="display:none;">
             <div style="overflow-x: auto;">
-                <table class="registrations-table">
+                <table class="report-table">
                     <thead>
                         <tr>
-                            <th>المرشِّح</th>
-                            <th>رقم الهاتف</th>
-                            <th>المرشَّح له</th>
-                            <th>السبب</th>
-                            <th>التاريخ</th>
-                            <th>الإجراءات</th>
+                            <th style="width: 30px;">م</th>
+                            <th style="width: 80px;">رقم الجلوس</th>
+                            <th style="width: 60px;">السن</th>
+                            <th style="width: 60px;">اللجنة</th>
+                            <th style="width: 250px;">اسم المتسابق</th>
+                            <th style="width: 50px;">النوع</th>
+                            <th style="width: 120px;">أرقام الهاتف</th>
+                            <th style="width: 60px;">حضور</th>
+                            <th style="width: 60px;">الدرجة</th>
                         </tr>
                     </thead>
-                    <tbody id="nominationsList">
-                        <!-- الترشيحات ستظهر هنا -->
+                    <tbody>
+                        ${levelStudents.map((s, i) => `
+                        <tr>
+                            <td>${i + 1}</td>
+                            <td class="seat-num">${s.seatNumber || '---'}</td>
+                            <td style="font-size: 11px;">${calculateAgeFromID(s.nationalID).fullText}</td>
+                            <td>${s.committeeNumber || '---'}</td>
+                            <td class="student-name">${s.studentName}</td>
+                            <td>${s.gender}</td>
+                            <td class="phones">${s.phone1}<br>${s.phone2}</td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        `).join('')}
                     </tbody>
                 </table>
             </div>
@@ -526,19 +551,74 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        function checkPassword() {
-            const pass = document.getElementById('adminPassword').value;
-            if (pass === '01000qwe') {
-                document.getElementById('loginOverlay').style.display = 'none';
-                document.getElementById('adminContent').style.display = 'block';
-                loadData();
-            } else {
-                alert('كلمة مرور خاطئة!');
+        async function checkPassword() {
+            const passInput = document.getElementById('adminPassword');
+            const enteredPass = passInput.value;
+
+            // Show loading state on login button
+            const loginBtn = document.querySelector('.btn-login');
+            const originalBtnText = loginBtn.textContent;
+            loginBtn.textContent = 'جاري التحقق...';
+            loginBtn.disabled = true;
+
+            try {
+                // Fetch the password from Firebase
+                const authDoc = await db.collection('settings').doc('adminAuth').get();
+
+                if (authDoc.exists) {
+                    const correctPass = authDoc.data().password;
+                    if (enteredPass === correctPass) {
+                        document.getElementById('loginOverlay').style.display = 'none';
+                        document.getElementById('adminContent').style.display = 'block';
+                        loadData();
+                    } else {
+                        alert('كلمة مرور خاطئة!');
+                    }
+                } else {
+                    // One-time setup: If password doesn't exist in DB, set the default
+                    // This only happens once to initialize your DB
+                    if (confirm('تنبيه: لم يتم العثور على كلمة مرور في قاعدة البيانات. هل تريد تعيين "01000qwe" ككلمة مرور افتراضية؟')) {
+                        await db.collection('settings').doc('adminAuth').set({ password: '01000qwe' });
+                        alert('تم تهيئة كلمة المرور بنجاح. يرجى المحاولة مرة أخرى.');
+                    }
+                }
+            } catch (error) {
+                console.error("Auth Error:", error);
+                alert('فشل في الاتصال بقاعدة البيانات. تأكد من إعدادات الـ Security Rules.');
+            } finally {
+                loginBtn.textContent = originalBtnText;
+                loginBtn.disabled = false;
             }
         }
 
         function logout() {
             location.reload();
+        }
+
+        // --- Export Data Function (GitHub Friendly) ---
+        function exportBackupData() {
+            if (allRegistrations.length === 0) {
+                alert('لا توجد بيانات لتصديرها حالياً.');
+                return;
+            }
+
+            // Create the content for data.js
+            const content = `// نسخة احتياطية لمسابقة حامل القرآن - بتاريخ: ${new Date().toLocaleString('ar-EG')}
+const backupData = ${JSON.stringify(allRegistrations, null, 2)};
+console.log('تم تحميل البيانات الاحتياطية بنجاح.');`;
+
+            // Create a blob and download link
+            const blob = new Blob([content], { type: 'text/javascript' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'data.js';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            alert('تم توليد ملف data.js بنجاح. يمكنك رفعه الآن على GitHub كنسخة احتياطية.');
         }
 
         function switchTab(tab) {
@@ -612,6 +692,158 @@
                     btn.className = 'btn btn-secondary';
                 }
             });
+        }
+
+        function printTicket(id) {
+            const student = allRegistrations.find(s => s.id === id);
+            if (!student) return;
+
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+            <html>
+                <head>
+                    <title>طباعة رقم الجلوس - ${student.studentName}</title>
+                    <style>
+                        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
+                        body { 
+                            font-family: 'Cairo', sans-serif; 
+                            direction: rtl; 
+                            padding: 20px;
+                            display: flex;
+                            justify-content: center;
+                            background: #fff;
+                        }
+                        .ticket-card {
+                            width: 10cm;
+                            height: 6cm;
+                            border: 2px double #d4af37;
+                            padding: 10px;
+                            position: relative;
+                            background: #fff;
+                            overflow: hidden;
+                            border-radius: 15px;
+                            display: flex;
+                            flex-direction: column;
+                            box-sizing: border-box;
+                        }
+                        .header {
+                            text-align: center;
+                            border-bottom: 1px solid #eee;
+                            padding-bottom: 5px;
+                            margin-bottom: 15px;
+                        }
+                        .header h2 { margin: 0; font-size: 16px; color: #1a1a1a; }
+                        .header p { margin: 2px 0; font-size: 12px; color: #d4af37; font-weight: bold; }
+                        
+                        .content-flex {
+                            display: flex;
+                            gap: 15px;
+                            height: 100%;
+                        }
+                        
+                        .photo-box {
+                            width: 2.2cm;
+                            height: 2.8cm;
+                            border: 1px solid #ddd;
+                            border-radius: 8px;
+                            overflow: hidden;
+                            background: #f9f9f9;
+                        }
+                        .photo-box img {
+                            width: 100%;
+                            height: 100%;
+                            object-fit: cover;
+                        }
+                        
+                        .info-list {
+                            flex: 1;
+                            display: flex;
+                            flex-direction: column;
+                            gap: 10px;
+                        }
+                        .info-item {
+                            display: flex;
+                            align-items: center;
+                            gap: 8px;
+                        }
+                        .label { font-weight: bold; font-size: 12px; color: #555; white-space: nowrap; }
+                        .value { 
+                            font-size: 13px; 
+                            color: #000; 
+                            font-weight: 700;
+                            border-bottom: 1px dashed #ccc;
+                            flex: 1;
+                        }
+                        
+                        .seat-badge {
+                            position: absolute;
+                            top: 10px;
+                            left: 10px;
+                            background: #1a1a1a;
+                            color: #d4af37;
+                            padding: 5px 10px;
+                            border-radius: 8px;
+                            font-size: 18px;
+                            font-weight: 800;
+                            border: 1px solid #d4af37;
+                        }
+                        
+                        .footer-text {
+                            text-align: center;
+                            font-size: 10px;
+                            color: #888;
+                            margin-top: auto;
+                            padding-top: 5px;
+                            border-top: 1px solid #eee;
+                        }
+
+                        @media print {
+                            body { padding: 0; margin: 0; }
+                            .ticket-card { box-shadow: none; -webkit-print-color-adjust: exact; }
+                        }
+                    </style>
+                </head>
+                <body onload="window.print(); window.close();">
+                    <div class="ticket-card">
+                        <div class="seat-badge">${student.seatNumber || '---'}</div>
+                        <div class="header">
+                            <h2>مسابقة حامل القرآن بمسير</h2>
+                            <p>رقم الجلوس للمتسابق</p>
+                        </div>
+                        
+                        <div class="content-flex">
+                            <div class="photo-box">
+                                ${student.personalPhotoPath ? `<img src="${student.personalPhotoPath}" />` : '<div style="display:flex; align-items:center; justify-content:center; height:100%; font-size:10px; color:#aaa;">بدون صورة</div>'}
+                            </div>
+                            
+                            <div class="info-list">
+                                <div class="info-item">
+                                    <span class="label">الاسم:</span>
+                                    <span class="value" style="font-size: ${student.studentName.length > 25 ? '11px' : '13px'}">${student.studentName}</span>
+                                </div>
+                                <div class="info-item">
+                                    <div style="display: flex; gap: 10px; width: 100%;">
+                                        <div style="flex: 0 0 50px;">
+                                            <span class="label">اللجنة:</span>
+                                            <span class="value" style="text-align: center;">${student.committee || '--'}</span>
+                                        </div>
+                                        <div style="flex: 1;">
+                                            <span class="label">المستوى:</span>
+                                            <span class="value" style="font-size: 10px;">${student.level}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="footer-text">
+                            نور الله دربك بحفظ كتابه الكريم - يمنع اصطحاب المحمول
+                        </div>
+                    </div>
+                </body>
+            </html>
+        `);
+            printWindow.document.close();
         }
 
         async function loadData() {
@@ -783,7 +1015,7 @@
                 <div><strong style="color: #d4af37;">الرقم القومي:</strong><br>${data.nationalID || '-'}</div>
                 <div><strong style="color: #d4af37;">السن:</strong><br>${data.formattedAge || (data.ageYears ? data.ageYears + ' سنة' : '-')}</div>
                 <div><strong style="color: #d4af37;">رقم الجلوس:</strong><br>${data.seatNumber || '-'}</div>
-                <div><strong style="color: #d4af37;">رقم اللجنة:</strong><br>${data.committee || '-'}</div>
+                <div><strong style="color: #d4af37;">اللجنة:</strong><br>${data.committee || '-'}</div>
                 <div><strong style="color: #d4af37;">النوع:</strong><br>${data.gender || '-'}</div>
                 <div><strong style="color: #d4af37;">المستوى:</strong><br>${data.level}</div>
                 <div><strong style="color: #d4af37;">هاتف المتسابق:</strong><br>${data.phone1}</div>
@@ -799,6 +1031,17 @@
                     ${photoBtn}
                 </div>
                 <div style="grid-column: span 2; font-size: 0.8rem; color: #888; border-top: 1px solid #222; margin-top: 10px; padding-top: 10px;">تاريخ التسجيل: ${data.timestamp ? new Date(data.timestamp.seconds * 1000).toLocaleString('ar-EG') : '-'}</div>
+                <div style="grid-column: span 2; display: flex; gap: 10px; margin-top: 20px; border-top: 1px solid #333; padding-top: 20px;">
+                    <button onclick="printTicket('${data.id}')" class="btn btn-primary" style="flex:2;">
+                        <i class="fas fa-print"></i> طباعة رقم الجلوس
+                    </button>
+                    <button onclick="closeDetailsModal()" class="btn btn-secondary" style="flex:1;">
+                        إغلاق
+                    </button>
+                    <button onclick="deleteRegistration('${data.id}')" class="btn btn-delete" style="flex:0 0 50px; background: #ff4d4d; color: white; border: none; border-radius: 10px; cursor: pointer;">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
             `;
 
             document.getElementById('detailsModal').style.display = 'flex';

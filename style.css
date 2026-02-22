@@ -115,8 +115,8 @@ h3 {
     z-index: 100;
     width: 100%;
     position: absolute;
-    bottom: 32%;
-    /* Raised by another 2cm (total 32%) */
+    bottom: 58%;
+    /* Raised significantly to align with "قدم الآن إلكترونياً" in the top button area */
     padding: 0 20px;
 }
 
@@ -132,8 +132,7 @@ h3 {
     cursor: pointer !important;
     visibility: visible !important;
     opacity: 1 !important;
-    animation: none !important;
-    transition: none !important;
+    border-radius: 40px !important;
 }
 
 .hero-btns .btn-primary:hover {
@@ -152,8 +151,8 @@ h3 {
     .hero-btns {
         flex-direction: column;
         align-items: center;
-        bottom: 32%;
-        /* Adjusted to 32% to match desktop */
+        bottom: 58%;
+        /* Adjusted to 58% for mobile as well */
     }
 
     .hero-btns .btn-primary {
