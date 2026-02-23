@@ -1078,15 +1078,15 @@ console.log('تم تحميل البيانات الاحتياطية بنجاح.')
                     messages.forEach(data => {
                         const date = data.timestamp ? data.timestamp.toDate().toLocaleString('ar-EG') : 'قيد المعالجة';
                         const row = `
-                < tr >
-                                <td>${data.name}</td>
-                                <td>${data.phone}</td>
-                                <td style="max-width:300px;">${data.message}</td>
-                                <td>${date}</td>
-                                <td>
-                                    <button onclick="deleteMessage('${data.id}')" class="btn-view btn-delete"><i class="fas fa-trash"></i></button>
-                                </td>
-                            </tr >
+                        <tr>
+                            <td>${data.name}</td>
+                            <td>${data.phone}</td>
+                            <td style="max-width:300px;">${data.message}</td>
+                            <td>${date}</td>
+                            <td>
+                                <button onclick="deleteMessage('${data.id}')" class="btn-view btn-delete"><i class="fas fa-trash"></i></button>
+                            </td>
+                        </tr>
                 `;
                         list.innerHTML += row;
                     });
@@ -1137,7 +1137,7 @@ console.log('تم تحميل البيانات الاحتياطية بنجاح.')
                         noms.forEach(data => {
                             const date = data.timestamp ? data.timestamp.toDate().toLocaleString('ar-EG') : 'قيد المعالجة';
                             const row = `
-                < tr >
+                                <tr>
                                     <td>${data.nominatorName || 'فاعل خير'}</td>
                                     <td>${data.nominatorPhone || '-'}</td>
                                     <td>${data.nomineeName}</td>
@@ -1146,7 +1146,7 @@ console.log('تم تحميل البيانات الاحتياطية بنجاح.')
                                     <td>
                                         <button onclick="deleteNomination('${data.id}')" class="btn-view btn-delete"><i class="fas fa-trash"></i></button>
                                     </td>
-                                </tr >
+                                </tr>
                 `;
                             list.innerHTML += row;
                         });
@@ -1276,7 +1276,7 @@ console.log('تم تحميل البيانات الاحتياطية بنجاح.')
             allBlockedStudents.forEach(data => {
                 const date = data.blockedAt ? data.blockedAt.toDate().toLocaleString('ar-EG') : 'قيد المعالجة';
                 const row = `
-                < tr >
+                    <tr>
                         <td style="font-weight:bold;">${data.studentName}</td>
                         <td>${data.nationalID}</td>
                         <td>${data.ageYears} س و ${data.ageMonths} ش</td>
@@ -1285,7 +1285,7 @@ console.log('تم تحميل البيانات الاحتياطية بنجاح.')
                         <td>
                             <button onclick="deleteBlockedStudent('${data.id}')" class="btn-view btn-delete"><i class="fas fa-trash"></i></button>
                         </td>
-                    </tr >
+                    </tr>
                 `;
                 list.innerHTML += row;
             });

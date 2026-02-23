@@ -225,6 +225,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize Firebase
     let db = null;
     let storage = null;
+    let auth = null;
     const isFirebaseConfigured = firebaseConfig.apiKey !== "YOUR_API_KEY";
 
     if (typeof firebase !== 'undefined' && isFirebaseConfigured) {
@@ -232,12 +233,81 @@ document.addEventListener('DOMContentLoaded', () => {
             firebase.initializeApp(firebaseConfig);
             db = firebase.firestore();
             storage = firebase.storage();
+            auth = firebase.auth();
         } catch (err) {
             console.error("Firebase Init Error:", err);
         }
     }
 
     // --- Global Settings enforcement ---
+    let confirmationResult = null;
+    let isPhoneVerified = false;
+
+    // Initialize reCAPTCHA
+    if (document.getElementById('sendOtpBtn')) {
+        window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('sendOtpBtn', {
+            'size': 'invisible',
+            'callback': (response) => {
+                // reCAPTCHA solved
+            }
+        });
+    }
+
+    const sendOtpBtn = document.getElementById('sendOtpBtn');
+    if (sendOtpBtn) {
+        sendOtpBtn.addEventListener('click', async () => {
+            const phone = document.getElementById('phone1').value.trim();
+            if (!/^01[0125][0-9]{8}$/.test(phone)) {
+                alert('يرجى إدخال رقم هاتف مصري صحيح (مثال: 01012345678)');
+                return;
+            }
+
+            sendOtpBtn.disabled = true;
+            sendOtpBtn.textContent = 'جاري الإرسال...';
+
+            const fullPhone = '+20' + phone.substring(1);
+            try {
+                confirmationResult = await auth.signInWithPhoneNumber(fullPhone, window.recaptchaVerifier);
+                document.getElementById('otpGroup').style.display = 'block';
+                alert('تم إرسال كود التحقق في رسالة نصية (SMS)');
+            } catch (error) {
+                console.error(error);
+                alert('حدث خطأ: ' + error.message);
+                sendOtpBtn.disabled = false;
+                sendOtpBtn.textContent = 'إرسال الكود';
+            }
+        });
+    }
+
+    const verifyOtpBtn = document.getElementById('verifyOtpBtn');
+    if (verifyOtpBtn) {
+        verifyOtpBtn.addEventListener('click', async () => {
+            const code = document.getElementById('otpCode').value.trim();
+            if (code.length !== 6) {
+                alert('يرجى إدخال الكود المكون من 6 أرقام');
+                return;
+            }
+
+            verifyOtpBtn.disabled = true;
+            verifyOtpBtn.textContent = 'جاري التأكيد...';
+
+            try {
+                await confirmationResult.confirm(code);
+                isPhoneVerified = true;
+                document.getElementById('phoneVerifiedBadge').style.display = 'block';
+                document.getElementById('otpCode').disabled = true;
+                verifyOtpBtn.style.display = 'none';
+                sendOtpBtn.style.display = 'none';
+                alert('تم التحقق من رقم الهاتف بنجاح ✅');
+            } catch (error) {
+                console.error(error);
+                alert('الكود غير صحيح، يرجى المحاولة مرة أخرى');
+                verifyOtpBtn.disabled = false;
+                verifyOtpBtn.textContent = 'تأكيد الكود';
+            }
+        });
+    }
+
     let appSettings = {
         registrationStatus: 'open',
         nominationStatus: 'open'
@@ -471,6 +541,16 @@ document.addEventListener('DOMContentLoaded', () => {
             const ageInfo = calculateAgeFromID(nationalID);
             if (!ageInfo) {
                 alert('يرجى التأكد من صحة الرقم القومي (14 رقم تبدأ بـ 2 أو 3).');
+                return;
+            }
+
+            if (ageInfo.years > 16 || (ageInfo.years === 16 && (ageInfo.months > 0 || ageInfo.days > 0))) {
+                alert('عذراً، يجب ألا يزيد عمر المتسابق عن 16 عاماً بالضبط.');
+                return;
+            }
+
+            if (!isPhoneVerified) {
+                alert('⚠️ يرجى التحقق من رقم الهاتف أولاً عن طريق إرسال وتأكيد كود الـ OTP.');
                 return;
             }
 
