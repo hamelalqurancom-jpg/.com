@@ -184,21 +184,45 @@ h3 {
     filter: drop-shadow(0 0 8px #ff4d4d);
 }
 
+.hero-flyer-img {
+    width: 100%;
+    height: auto;
+    display: block;
+    /* ضبط القص لضمان ظهور سطر "حيث يلتقي أهل القرآن" بالكامل */
+    clip-path: inset(0 0 24% 0);
+    margin-bottom: -23%;
+}
+
 .hero-btns .btn:hover {
     transform: translateY(-5px) scale(1.08) !important;
     filter: brightness(1.2);
     animation-play-state: paused;
 }
 
+.hidden-gallery-item {
+    display: none !important;
+}
+
 @media (max-width: 768px) {
     .hero-flyer-img {
-        clip-path: inset(0 0 26% 0);
-        margin-bottom: -25%;
+        clip-path: inset(0 0 24% 0);
+        margin-bottom: -23%;
     }
 
     .hero-btns .btn {
         width: 95% !important;
         height: 55px !important;
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr !important;
+        gap: 15px !important;
+    }
+
+    .input-group input,
+    .input-group select {
+        width: 100% !important;
+        height: 52px !important;
     }
 }
 

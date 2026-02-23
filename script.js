@@ -239,74 +239,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- Global Settings enforcement ---
-    let confirmationResult = null;
-    let isPhoneVerified = false;
 
-    // Initialize reCAPTCHA
-    if (document.getElementById('sendOtpBtn')) {
-        window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('sendOtpBtn', {
-            'size': 'invisible',
-            'callback': (response) => {
-                // reCAPTCHA solved
-            }
-        });
-    }
-
-    const sendOtpBtn = document.getElementById('sendOtpBtn');
-    if (sendOtpBtn) {
-        sendOtpBtn.addEventListener('click', async () => {
-            const phone = document.getElementById('phone1').value.trim();
-            if (!/^01[0125][0-9]{8}$/.test(phone)) {
-                alert('يرجى إدخال رقم هاتف مصري صحيح (مثال: 01012345678)');
-                return;
-            }
-
-            sendOtpBtn.disabled = true;
-            sendOtpBtn.textContent = 'جاري الإرسال...';
-
-            const fullPhone = '+20' + phone.substring(1);
-            try {
-                confirmationResult = await auth.signInWithPhoneNumber(fullPhone, window.recaptchaVerifier);
-                document.getElementById('otpGroup').style.display = 'block';
-                alert('تم إرسال كود التحقق في رسالة نصية (SMS)');
-            } catch (error) {
-                console.error(error);
-                alert('حدث خطأ: ' + error.message);
-                sendOtpBtn.disabled = false;
-                sendOtpBtn.textContent = 'إرسال الكود';
-            }
-        });
-    }
-
-    const verifyOtpBtn = document.getElementById('verifyOtpBtn');
-    if (verifyOtpBtn) {
-        verifyOtpBtn.addEventListener('click', async () => {
-            const code = document.getElementById('otpCode').value.trim();
-            if (code.length !== 6) {
-                alert('يرجى إدخال الكود المكون من 6 أرقام');
-                return;
-            }
-
-            verifyOtpBtn.disabled = true;
-            verifyOtpBtn.textContent = 'جاري التأكيد...';
-
-            try {
-                await confirmationResult.confirm(code);
-                isPhoneVerified = true;
-                document.getElementById('phoneVerifiedBadge').style.display = 'block';
-                document.getElementById('otpCode').disabled = true;
-                verifyOtpBtn.style.display = 'none';
-                sendOtpBtn.style.display = 'none';
-                alert('تم التحقق من رقم الهاتف بنجاح ✅');
-            } catch (error) {
-                console.error(error);
-                alert('الكود غير صحيح، يرجى المحاولة مرة أخرى');
-                verifyOtpBtn.disabled = false;
-                verifyOtpBtn.textContent = 'تأكيد الكود';
-            }
-        });
-    }
 
     let appSettings = {
         registrationStatus: 'open',
@@ -549,10 +482,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            if (!isPhoneVerified) {
-                alert('⚠️ يرجى التحقق من رقم الهاتف أولاً عن طريق إرسال وتأكيد كود الـ OTP.');
-                return;
-            }
+
 
             // --- 1. Unique Phone Numbers Validation ---
             const formData = new FormData(registrationForm);
@@ -571,7 +501,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (submitBtn) {
                 submitBtn.disabled = true;
                 if (loader) loader.style.display = 'inline-block';
-                if (btnText) btnText.textContent = 'جاري التحقق من البيانات...';
+                if (btnText) btnText.innerHTML = '<span style="font-size: 0.8rem;">يرجى الانتظار ولاتغلق الصفحة حتى يتم رفع الصور واستلام رقم الجلوس...</span>';
             }
 
             try {
@@ -719,31 +649,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const lightbox = document.getElementById('lightbox');
     const lightboxImg = document.getElementById('lightbox-img');
     const lightboxClose = document.querySelector('.lightbox-close');
-    let visibleCount = 4;
 
-    // Initially hide images beyond the first 5
-    const updateGalleryVisibility = () => {
-        galleryItems.forEach((item, index) => {
-            if (index < visibleCount) {
-                item.classList.remove('hidden');
-                item.style.display = 'block';
-            } else {
-                item.classList.add('hidden');
-                item.style.display = 'none';
-            }
-        });
-
-        if (visibleCount >= galleryItems.length) {
-            if (loadMoreBtn) loadMoreBtn.style.display = 'none';
-        }
-    };
-
-    updateGalleryVisibility();
-
+    // Initially, only the first 4 items are visible (handled by CSS/HTML .hidden-gallery-item)
     if (loadMoreBtn) {
         loadMoreBtn.addEventListener('click', () => {
-            visibleCount += 5; // Show 5 more
-            updateGalleryVisibility();
+            const hiddenItems = document.querySelectorAll('.hidden-gallery-item');
+            hiddenItems.forEach(item => {
+                item.style.display = 'block';
+                // Remove the class to ensure they stay visible
+                item.classList.remove('hidden-gallery-item');
+            });
+            loadMoreBtn.style.display = 'none';
+            if (typeof AOS !== 'undefined') AOS.refresh();
         });
     }
 
