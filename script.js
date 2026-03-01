@@ -737,4 +737,84 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // --- Last Year Winners Board Generation & Toggle ---
+    const toggleWinnersBtn = document.getElementById('toggleWinnersBtn');
+    const winnersBoard = document.getElementById('winnersBoard');
+    const winnersGrid = document.getElementById('winnersGrid');
+
+    const LEVEL_TITLES = {
+        1: "المستوى الأول (القرآن كاملاً)",
+        2: "المستوى الثاني (ثلاثة أرباع القرآن)",
+        3: "المستوى الثالث (نصف القرآن)",
+        4: "المستوى الرابع (ربع القرآن)"
+    };
+
+    function generateWinnersBoard() {
+        if (!winnersGrid) return;
+        winnersGrid.innerHTML = '';
+
+        for (let level in PAST_YEAR_WINNERS) {
+            const winners = PAST_YEAR_WINNERS[level];
+            const card = document.createElement('div');
+            card.className = 'level-winner-card';
+            card.setAttribute('data-aos', 'fade-up');
+
+            let winnersHtml = `
+                <div class="level-card-header">
+                    <h3>${LEVEL_TITLES[level] || 'مستوى تعليمي'}</h3>
+                    <div class="decorative-line" style="width: 50px; margin: 5px auto;"></div>
+                </div>
+                <ul class="winners-list">
+            `;
+
+            winners.forEach((name, index) => {
+                const rank = index + 1;
+                let rankClass = 'rank-other';
+                let rankLabel = rank;
+
+                if (rank === 1) rankClass = 'rank-1';
+                else if (rank === 2) rankClass = 'rank-2';
+                else if (rank === 3) rankClass = 'rank-3';
+
+                winnersHtml += `
+                    <li class="winner-li">
+                        <div class="rank-badge ${rankClass}">${rankLabel}</div>
+                        <span class="winner-name">${name}</span>
+                    </li>
+                `;
+            });
+
+            winnersHtml += `</ul>`;
+            card.innerHTML = winnersHtml;
+            winnersGrid.appendChild(card);
+        }
+    }
+
+    if (toggleWinnersBtn && winnersBoard) {
+        let isGenerated = false;
+        toggleWinnersBtn.addEventListener('click', () => {
+            if (winnersBoard.style.display === 'none') {
+                if (!isGenerated) {
+                    generateWinnersBoard();
+                    isGenerated = true;
+                }
+                winnersBoard.style.display = 'block';
+                toggleWinnersBtn.innerHTML = '<i class="fas fa-times"></i> إغلاق لوحة الشرف';
+                toggleWinnersBtn.classList.remove('btn-secondary');
+                toggleWinnersBtn.classList.add('btn-primary');
+
+                // Refresh AOS to animate the new elements
+                setTimeout(() => {
+                    AOS.refresh();
+                    winnersBoard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 100);
+            } else {
+                winnersBoard.style.display = 'none';
+                toggleWinnersBtn.innerHTML = '<i class="fas fa-trophy"></i> أوائل العام الماضي (2025)';
+                toggleWinnersBtn.classList.remove('btn-primary');
+                toggleWinnersBtn.classList.add('btn-secondary');
+            }
+        });
+    }
 });
